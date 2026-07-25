@@ -91,7 +91,13 @@ def send_message_api():
     return jsonify({'success': True, 'message': message})
 
 # Vercel handler
-from vercel_wsgi import handle_wsgi_event
-
 def handler(event, context):
-    return handle_wsgi_event(app, event, context)
+    from flask import Flask
+    from werkzeug.middleware.dispatcher import DispatcherMiddleware
+    from werkzeug.wrappers import Response
+    
+    # Simple WSGI handler for Vercel
+    def simple_wsgi(environ, start_response):
+        return app(environ, start_response)
+    
+    return simple_wsgi
