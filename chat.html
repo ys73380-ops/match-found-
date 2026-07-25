@@ -2,59 +2,167 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat - Dating Bot</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dating Mini App</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: #1a1a2e;
-            color: #fff;
+            background: var(--tg-theme-bg-color, #1a1a2e);
+            color: var(--tg-theme-text-color, #fff);
             height: 100vh;
             display: flex;
             flex-direction: column;
+            overflow: hidden;
+        }
+        .screen {
+            display: none;
+            flex: 1;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .screen.active {
+            display: flex;
         }
         .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--tg-theme-secondary-bg-color, linear-gradient(135deg, #667eea 0%, #764ba2 100%));
             padding: 15px;
             display: flex;
             align-items: center;
             justify-content: space-between;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
         .header h1 {
             font-size: 18px;
             font-weight: 600;
+            color: var(--tg-theme-button-text-color, #fff);
         }
-        .header .status {
+        .header .back-btn {
+            background: none;
+            border: none;
+            color: var(--tg-theme-button-text-color, #fff);
+            font-size: 20px;
+            cursor: pointer;
+        }
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            -webkit-overflow-scrolling: touch;
+        }
+        .card {
+            background: var(--tg-theme-secondary-bg-color, #2d2d44);
+            padding: 15px;
+            border-radius: 15px;
+            margin-bottom: 15px;
+        }
+        .btn {
+            width: 100%;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 25px;
+            background: var(--tg-theme-button-color, linear-gradient(135deg, #667eea 0%, #764ba2 100%));
+            color: var(--tg-theme-button-text-color, #fff);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, opacity 0.2s;
+            margin-top: 10px;
+        }
+        .btn:active {
+            transform: scale(0.95);
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .btn.secondary {
+            background: var(--tg-theme-hint-color, #4a5568);
+        }
+        .input {
+            width: 100%;
+            padding: 12px 15px;
+            border: none;
+            border-radius: 10px;
+            background: var(--tg-theme-bg-color, #1a1a2e);
+            color: var(--tg-theme-text-color, #fff);
+            font-size: 14px;
+            margin-bottom: 10px;
+            outline: none;
+        }
+        .input::placeholder {
+            color: var(--tg-theme-hint-color, #888);
+        }
+        .label {
             font-size: 12px;
-            opacity: 0.8;
+            color: var(--tg-theme-hint-color, #888);
+            margin-bottom: 5px;
         }
-        .messages {
+        .match-card {
+            background: var(--tg-theme-secondary-bg-color, #2d2d44);
+            padding: 15px;
+            border-radius: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .match-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+        .match-info {
+            flex: 1;
+        }
+        .match-name {
+            font-weight: 600;
+            font-size: 16px;
+        }
+        .match-details {
+            font-size: 12px;
+            color: var(--tg-theme-hint-color, #888);
+        }
+        .chat-messages {
             flex: 1;
             overflow-y: auto;
             padding: 15px;
             display: flex;
             flex-direction: column;
             gap: 10px;
+            -webkit-overflow-scrolling: touch;
         }
         .message {
             max-width: 80%;
-            padding: 10px 15px;
-            border-radius: 15px;
+            padding: 12px 16px;
+            border-radius: 18px;
             word-wrap: break-word;
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         .message.sent {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--tg-theme-button-color, linear-gradient(135deg, #667eea 0%, #764ba2 100%));
+            color: var(--tg-theme-button-text-color, #fff);
             align-self: flex-end;
             border-bottom-right-radius: 5px;
         }
         .message.received {
-            background: #2d2d44;
+            background: var(--tg-theme-secondary-bg-color, #2d2d44);
+            color: var(--tg-theme-text-color, #fff);
             align-self: flex-start;
             border-bottom-left-radius: 5px;
         }
@@ -63,122 +171,409 @@
             opacity: 0.7;
             margin-top: 5px;
             text-align: right;
+            color: var(--tg-theme-hint-color, #888);
         }
-        .input-area {
+        .chat-input {
             padding: 15px;
-            background: #16213e;
+            background: var(--tg-theme-bg-color, #16213e);
             display: flex;
             gap: 10px;
+            padding-bottom: max(15px, env(safe-area-inset-bottom));
         }
-        .input-area input {
+        .chat-input input {
             flex: 1;
             padding: 12px 15px;
             border: none;
             border-radius: 25px;
-            background: #2d2d44;
-            color: #fff;
+            background: var(--tg-theme-secondary-bg-color, #2d2d44);
+            color: var(--tg-theme-text-color, #fff);
             font-size: 14px;
             outline: none;
         }
-        .input-area button {
+        .chat-input input::placeholder {
+            color: var(--tg-theme-hint-color, #888);
+        }
+        .chat-input button {
             padding: 12px 20px;
             border: none;
             border-radius: 25px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: #fff;
+            background: var(--tg-theme-button-color, linear-gradient(135deg, #667eea 0%, #764ba2 100%));
+            color: var(--tg-theme-button-text-color, #fff);
             font-size: 14px;
             font-weight: 600;
             cursor: pointer;
-            transition: transform 0.2s;
-        }
-        .input-area button:hover {
-            transform: scale(1.05);
-        }
-        .input-area button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
         }
         .loading {
             text-align: center;
             padding: 20px;
-            color: #888;
+            color: var(--tg-theme-hint-color, #888);
         }
         .error {
-            background: #ff4757;
-            color: white;
+            background: var(--tg-theme-error-color, #ff4757);
+            color: var(--tg-theme-button-text-color, #fff);
             padding: 10px;
             margin: 10px;
             border-radius: 10px;
             text-align: center;
         }
-        .typing {
+        .success {
+            background: #4ade80;
+            color: #fff;
+            padding: 10px;
+            margin: 10px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .share-banner {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            padding: 15px;
+            border-radius: 15px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .share-banner h3 {
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+        .share-banner p {
             font-size: 12px;
-            color: #888;
-            padding: 5px 15px;
-            font-style: italic;
+            opacity: 0.9;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .stat-box {
+            background: var(--tg-theme-secondary-bg-color, #2d2d44);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--tg-theme-button-color, #667eea);
+        }
+        .stat-label {
+            font-size: 12px;
+            color: var(--tg-theme-hint-color, #888);
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>💬 Chat</h1>
-        <span class="status" id="status">Connecting...</span>
+    <!-- Home Screen -->
+    <div class="screen active" id="homeScreen">
+        <div class="header">
+            <h1>💕 Dating App</h1>
+        </div>
+        <div class="content" id="homeContent">
+            <div class="loading">Loading...</div>
+        </div>
     </div>
-    <div class="messages" id="messages">
-        <div class="loading">Loading messages...</div>
+
+    <!-- Profile Setup Screen -->
+    <div class="screen" id="profileScreen">
+        <div class="header">
+            <button class="back-btn" onclick="showScreen('homeScreen')">←</button>
+            <h1>📝 Setup Profile</h1>
+        </div>
+        <div class="content">
+            <div class="card">
+                <div class="label">Name *</div>
+                <input type="text" class="input" id="profileName" placeholder="Your name">
+                
+                <div class="label">Age *</div>
+                <input type="number" class="input" id="profileAge" placeholder="18-100" min="18" max="100">
+                
+                <div class="label">Gender *</div>
+                <select class="input" id="profileGender">
+                    <option value="">Select gender</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                </select>
+                
+                <div class="label">State *</div>
+                <input type="text" class="input" id="profileState" placeholder="Your state">
+                
+                <button class="btn" onclick="saveProfile()">Save Profile</button>
+            </div>
+        </div>
     </div>
-    <div class="typing" id="typing"></div>
-    <div class="input-area">
-        <input type="text" id="messageInput" placeholder="Type a message..." />
-        <button id="sendBtn">Send</button>
+
+    <!-- Find Matches Screen -->
+    <div class="screen" id="findScreen">
+        <div class="header">
+            <button class="back-btn" onclick="showScreen('homeScreen')">←</button>
+            <h1>🔍 Find Matches</h1>
+        </div>
+        <div class="content" id="findContent">
+            <div class="loading">Finding matches...</div>
+        </div>
+    </div>
+
+    <!-- Chat Screen -->
+    <div class="screen" id="chatScreen">
+        <div class="header">
+            <button class="back-btn" onclick="endChat()">←</button>
+            <h1 id="chatPartnerName">💬 Chat</h1>
+        </div>
+        <div class="chat-messages" id="chatMessages">
+            <div class="loading">Loading messages...</div>
+        </div>
+        <div class="chat-input">
+            <input type="text" id="chatInput" placeholder="Type a message..." />
+            <button onclick="sendMessage()">Send</button>
+        </div>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
-        tg.expand();
         tg.ready();
-
-        const urlParams = new URLSearchParams(window.location.search);
-        const roomId = urlParams.get('room');
-        const userId = tg.initDataUnsafe.user?.id;
-
-        const messagesDiv = document.getElementById('messages');
-        const messageInput = document.getElementById('messageInput');
-        const sendBtn = document.getElementById('sendBtn');
-        const statusEl = document.getElementById('status');
-        const typingEl = document.getElementById('typing');
+        tg.expand();
+        tg.enableClosingConfirmation();
+        
+        document.body.style.backgroundColor = tg.themeParams.bg_color || '#1a1a2e';
+        document.body.style.color = tg.themeParams.text_color || '#fff';
 
         const API_BASE = window.location.origin;
+        const userId = tg.initDataUnsafe.user?.id;
+        const userName = tg.initDataUnsafe.user?.first_name;
+        const userUsername = tg.initDataUnsafe.user?.username;
 
+        let userProfile = null;
+        let currentRoom = null;
+        let chatPollInterval = null;
         let lastMessageId = 0;
-        let pollInterval = null;
 
-        async function fetchMessages() {
-            try {
-                const response = await fetch(`${API_BASE}/api/messages?room=${roomId}&last_id=${lastMessageId}`);
-                const data = await response.json();
-                
-                if (data.success) {
-                    const loading = messagesDiv.querySelector('.loading');
-                    if (loading) loading.remove();
-                    
-                    data.messages.forEach(msg => {
-                        appendMessage(msg);
-                        lastMessageId = Math.max(lastMessageId, msg.id);
-                    });
-                    
-                    statusEl.textContent = 'Online';
-                } else {
-                    statusEl.textContent = 'Error';
-                }
-            } catch (error) {
-                console.error('Error fetching messages:', error);
-                statusEl.textContent = 'Offline';
+        // Screen management
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+            
+            if (screenId === 'homeScreen') {
+                loadHome();
+            } else if (screenId === 'findScreen') {
+                loadMatches();
             }
         }
 
+        // API calls
+        async function apiCall(endpoint, data = {}) {
+            try {
+                const response = await fetch(`${API_BASE}${endpoint}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ...data, user_id: userId })
+                });
+                return await response.json();
+            } catch (error) {
+                console.error('API error:', error);
+                return { success: false, error: 'Network error' };
+            }
+        }
+
+        // Load home screen
+        async function loadHome() {
+            const content = document.getElementById('homeContent');
+            
+            const profileRes = await apiCall('/api/profile');
+            if (profileRes.success) {
+                userProfile = profileRes.profile;
+                
+                if (!userProfile.profile_complete) {
+                    content.innerHTML = `
+                        <div class="card">
+                            <h3>👋 Welcome ${userName}!</h3>
+                            <p style="margin: 10px 0; color: var(--tg-theme-hint-color, #888)">Complete your profile to find matches</p>
+                            <button class="btn" onclick="showScreen('profileScreen')">Setup Profile</button>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const hasShared = userProfile.has_shared;
+                
+                let html = `
+                    <div class="stats">
+                        <div class="stat-box">
+                            <div class="stat-number">${userProfile.age || '-'}</div>
+                            <div class="stat-label">Age</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-number">${userProfile.gender || '-'}</div>
+                            <div class="stat-label">Gender</div>
+                        </div>
+                    </div>
+                `;
+
+                if (!hasShared) {
+                    html += `
+                        <div class="share-banner">
+                            <h3>🔒 Share to Unlock</h3>
+                            <p>Share the app to unlock Find Matches!</p>
+                            <button class="btn" style="margin-top: 10px;" onclick="shareToUnlock()">Share Now</button>
+                        </div>
+                    `;
+                }
+
+                html += `
+                    <div class="card">
+                        <h3>👤 ${userProfile.first_name}</h3>
+                        <p style="margin: 10px 0; color: var(--tg-theme-hint-color, #888)">
+                            📍 ${userProfile.state || 'Not set'}<br>
+                            📤 Shared: ${hasShared ? '✅ Yes' : '❌ No'}
+                        </p>
+                        <button class="btn" onclick="showScreen('profileScreen')">Edit Profile</button>
+                        ${hasShared ? '<button class="btn" onclick="showScreen(\'findScreen\')">🔍 Find Matches</button>' : ''}
+                    </div>
+                `;
+
+                content.innerHTML = html;
+            } else {
+                content.innerHTML = `<div class="error">Failed to load profile</div>`;
+            }
+        }
+
+        // Save profile
+        async function saveProfile() {
+            const name = document.getElementById('profileName').value.trim();
+            const age = parseInt(document.getElementById('profileAge').value);
+            const gender = document.getElementById('profileGender').value;
+            const state = document.getElementById('profileState').value.trim();
+
+            if (!name || !age || !gender || !state) {
+                alert('Please fill all fields');
+                return;
+            }
+
+            if (age < 18 || age > 100) {
+                alert('Age must be between 18 and 100');
+                return;
+            }
+
+            const res = await apiCall('/api/profile', {
+                action: 'save',
+                name, age, gender, state
+            });
+
+            if (res.success) {
+                userProfile = res.profile;
+                showScreen('homeScreen');
+            } else {
+                alert(res.error || 'Failed to save profile');
+            }
+        }
+
+        // Share to unlock
+        async function shareToUnlock() {
+            const res = await apiCall('/api/share');
+            if (res.success) {
+                userProfile.has_shared = res.has_shared;
+                loadHome();
+                
+                // Open Telegram share
+                const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent('💕 Try this Dating App!')}`;
+                window.open(shareUrl, '_blank');
+            } else {
+                alert(res.error || 'Failed to unlock');
+            }
+        }
+
+        // Load matches
+        async function loadMatches() {
+            const content = document.getElementById('findContent');
+            
+            if (!userProfile || !userProfile.profile_complete) {
+                content.innerHTML = `<div class="error">Complete your profile first</div>`;
+                return;
+            }
+
+            if (!userProfile.has_shared) {
+                content.innerHTML = `
+                    <div class="share-banner">
+                        <h3>🔒 Share to Unlock</h3>
+                        <p>Share the app to unlock Find Matches!</p>
+                        <button class="btn" style="margin-top: 10px;" onclick="shareToUnlock()">Share Now</button>
+                    </div>
+                `;
+                return;
+            }
+
+            content.innerHTML = '<div class="loading">Finding matches...</div>';
+
+            const res = await apiCall('/api/find');
+            
+            if (res.success) {
+                if (res.matches.length === 0) {
+                    content.innerHTML = `
+                        <div class="card">
+                            <p style="text-align: center; color: var(--tg-theme-hint-color, #888)">
+                                😔 No matches found right now.<br>
+                                We'll notify you when someone matches!
+                            </p>
+                        </div>
+                    `;
+                } else {
+                    let html = '';
+                    res.matches.forEach(match => {
+                        html += `
+                            <div class="match-card">
+                                <div class="match-avatar">${match.first_name[0]}</div>
+                                <div class="match-info">
+                                    <div class="match-name">${match.first_name}</div>
+                                    <div class="match-details">${match.age} yrs • ${match.gender} • ${match.state}</div>
+                                </div>
+                                <button class="btn" style="width: auto; padding: 8px 15px;" onclick="startChat(${match.user_id}, '${match.first_name}')">Chat</button>
+                            </div>
+                        `;
+                    });
+                    content.innerHTML = html;
+                }
+            } else {
+                content.innerHTML = `<div class="error">${res.error || 'Failed to find matches'}</div>`;
+            }
+        }
+
+        // Start chat
+        async function startChat(partnerId, partnerName) {
+            const res = await apiCall('/api/chat', { action: 'start', partner_id: partnerId });
+            
+            if (res.success) {
+                currentRoom = res.room_id;
+                document.getElementById('chatPartnerName').textContent = `💬 ${partnerName}`;
+                showScreen('chatScreen');
+                loadMessages();
+            } else {
+                alert(res.error || 'Failed to start chat');
+            }
+        }
+
+        // Load messages
+        async function loadMessages() {
+            if (!currentRoom) return;
+
+            const res = await apiCall('/api/messages', { room: currentRoom, last_id: lastMessageId });
+            
+            if (res.success) {
+                const messagesDiv = document.getElementById('chatMessages');
+                const loading = messagesDiv.querySelector('.loading');
+                if (loading) loading.remove();
+
+                res.messages.forEach(msg => {
+                    appendMessage(msg);
+                    lastMessageId = Math.max(lastMessageId, msg.id);
+                });
+            }
+        }
+
+        // Append message
         function appendMessage(msg) {
             const isMine = msg.sender_id === userId;
+            const messagesDiv = document.getElementById('chatMessages');
+            
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${isMine ? 'sent' : 'received'}`;
             
@@ -190,78 +585,79 @@
             
             messagesDiv.appendChild(messageDiv);
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            
+            if (isMine && tg.HapticFeedback) {
+                tg.HapticFeedback.impactOccurred('light');
+            }
         }
 
+        // Send message
+        async function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const text = input.value.trim();
+            
+            if (!text || !currentRoom) return;
+
+            input.value = '';
+            
+            const res = await apiCall('/api/send', { room: currentRoom, text });
+            
+            if (res.success) {
+                await loadMessages();
+                if (tg.HapticFeedback) {
+                    tg.HapticFeedback.notificationOccurred('success');
+                }
+            } else {
+                alert(res.error || 'Failed to send message');
+                if (tg.HapticFeedback) {
+                    tg.HapticFeedback.notificationOccurred('error');
+                }
+            }
+        }
+
+        // End chat
+        async function endChat() {
+            if (currentRoom) {
+                await apiCall('/api/chat', { action: 'end', room: currentRoom });
+            }
+            currentRoom = null;
+            lastMessageId = 0;
+            if (chatPollInterval) {
+                clearInterval(chatPollInterval);
+                chatPollInterval = null;
+            }
+            showScreen('homeScreen');
+        }
+
+        // Escape HTML
         function escapeHtml(text) {
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
         }
 
-        async function sendMessage() {
-            const text = messageInput.value.trim();
-            if (!text) return;
-
-            sendBtn.disabled = true;
-            messageInput.disabled = true;
-
-            try {
-                const response = await fetch(`${API_BASE}/api/send`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        room: roomId,
-                        sender_id: userId,
-                        text: text
-                    })
-                });
-
-                const data = await response.json();
-                
-                if (data.success) {
-                    messageInput.value = '';
-                    await fetchMessages();
-                } else {
-                    showError(data.error || 'Failed to send message');
-                }
-            } catch (error) {
-                console.error('Error sending message:', error);
-                showError('Network error');
-            } finally {
-                sendBtn.disabled = false;
-                messageInput.disabled = false;
-                messageInput.focus();
-            }
-        }
-
-        function showError(text) {
-            const errorDiv = document.createElement('div');
-            errorDiv.className = 'error';
-            errorDiv.textContent = text;
-            messagesDiv.appendChild(errorDiv);
-            setTimeout(() => errorDiv.remove(), 3000);
-        }
-
-        sendBtn.addEventListener('click', sendMessage);
-        messageInput.addEventListener('keypress', (e) => {
+        // Chat input enter key
+        document.getElementById('chatInput').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') sendMessage();
         });
 
         // Initial load
-        if (roomId && userId) {
-            fetchMessages();
-            pollInterval = setInterval(fetchMessages, 2000);
-        } else {
-            messagesDiv.innerHTML = '<div class="error">Invalid room or user ID</div>';
-            statusEl.textContent = 'Error';
-        }
+        loadHome();
 
-        // Cleanup on page unload
-        window.addEventListener('beforeunload', () => {
-            if (pollInterval) clearInterval(pollInterval);
-        });
+        // Handle back button
+        if (tg.BackButton) {
+            tg.BackButton.show();
+            tg.BackButton.onClick(() => {
+                if (document.getElementById('chatScreen').classList.contains('active')) {
+                    endChat();
+                } else if (document.getElementById('findScreen').classList.contains('active') || 
+                           document.getElementById('profileScreen').classList.contains('active')) {
+                    showScreen('homeScreen');
+                } else {
+                    tg.close();
+                }
+            });
+        }
     </script>
 </body>
 </html>
