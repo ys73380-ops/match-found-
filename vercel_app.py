@@ -27,7 +27,7 @@ from pydantic import BaseModel
 # ─────────────────────────────────────────────
 BOT_TOKEN =("8859077363:AAEY5IvqLjvp2KHFi-sDeihrGCKmTu1vrtU")
 KV_URL =("https://prompt-quetzal-219477.upstash.io")
-KV_TOKEN =("********")
+KV_TOKEN =("ggAAAAAAA1lVAAIgcDECZqGNn4s9xuEezqSIxvU8XvbqsdNhFWCEEGpm8Lf0Zw")
 
 app = FastAPI(title="Dating Swipe App")
 
