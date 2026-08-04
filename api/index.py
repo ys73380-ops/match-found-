@@ -4,6 +4,9 @@ Telegram Dating Bot — Swipe Matching Web App (VERCEL VERSION - FIXED)
 ✅ Step-by-step registration: Name → Age → Gender → Match
 ✅ Better UI with smooth transitions
 ✅ Proper validation
+✅ Find button with notification when matches found
+✅ Telegram message notification when matches found
+✅ Chat feature between matched users
 """
 
 from __future__ import annotations
@@ -104,6 +107,25 @@ def verify_telegram_user(init_data: str) -> Optional[dict]:
 
 
 # ─────────────────────────────────────────────
+# TELEGRAM API
+# ─────────────────────────────────────────────
+async def send_telegram_message(user_id: int, text: str):
+    """Send message to user via Telegram Bot API"""
+    try:
+        async with httpx.AsyncClient(timeout=10) as c:
+            await c.post(
+                f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
+                json={
+                    "chat_id": user_id,
+                    "text": text,
+                    "parse_mode": "HTML"
+                }
+            )
+    except Exception:
+        pass
+
+
+# ─────────────────────────────────────────────
 # MODELS
 # ─────────────────────────────────────────────
 class InitRequest(BaseModel):
@@ -119,6 +141,11 @@ class SwipeRequest(BaseModel):
     init_data: str
     target_id: int
     action: str
+
+class MessageRequest(BaseModel):
+    init_data: str
+    to_user: int
+    message: str
 
 
 # ─────────────────────────────────────────────
@@ -212,14 +239,27 @@ async def api_swipe(req: SwipeRequest):
         if uid in target_swipes["liked"]:
             matched = True
             target_profile = await kv_get(f"profile:{req.target_id}") or {}
+            my_profile = await kv_get(f"profile:{uid}") or {}
             match_info = {
                 "name": target_profile.get("name", "Someone"),
                 "age": target_profile.get("age"),
             }
+            
+            # Save matches
             for key_uid, other_uid in ((uid, req.target_id), (req.target_id, uid)):
                 matches = await kv_get(f"matches:{key_uid}") or []
                 matches.append({"partner_id": other_uid, "created_at": datetime.now(timezone.utc).isoformat()})
                 await kv_set(f"matches:{key_uid}", matches)
+            
+            # Send Telegram notifications to both users
+            await send_telegram_message(
+                uid,
+                f"🎉 <b>It's a Match!</b>\n\nYou matched with <b>{target_profile.get('name')}</b> ({target_profile.get('age')})!\n\nOpen the Web App to start chatting! 💕"
+            )
+            await send_telegram_message(
+                req.target_id,
+                f"🎉 <b>It's a Match!</b>\n\nYou matched with <b>{my_profile.get('name')}</b> ({my_profile.get('age')})!\n\nOpen the Web App to start chatting! 💕"
+            )
     else:
         if req.target_id not in swipes["passed"]:
             swipes["passed"].append(req.target_id)
@@ -238,8 +278,80 @@ async def api_matches(init_data: str):
     result = []
     for m in matches:
         p = await kv_get(f"profile:{m['partner_id']}") or {}
-        result.append({"name": p.get("name", "User"), "age": p.get("age"), "gender": p.get("gender")})
+        result.append({
+            "user_id": m['partner_id'],
+            "name": p.get("name", "User"), 
+            "age": p.get("age"), 
+            "gender": p.get("gender"),
+            "created_at": m.get("created_at")
+        })
     return {"matches": result}
+
+
+@app.post("/api/send_message")
+async def api_send_message(req: MessageRequest):
+    user = verify_telegram_user(req.init_data)
+    if not user:
+        raise HTTPException(403, "Invalid user")
+    
+    uid = user.get("id")
+    to_user = req.to_user
+    
+    # Verify they are matched
+    matches = await kv_get(f"matches:{uid}") or []
+    matched_ids = [m['partner_id'] for m in matches]
+    if to_user not in matched_ids:
+        raise HTTPException(403, "You are not matched with this user")
+    
+    # Create chat ID (sorted to ensure same ID for both users)
+    chat_id = f"chat:{min(uid, to_user)}:{max(uid, to_user)}"
+    
+    # Get existing messages
+    messages = await kv_get(chat_id) or []
+    
+    # Add new message
+    new_message = {
+        "from": uid,
+        "to": to_user,
+        "text": req.message.strip()[:500],
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    }
+    messages.append(new_message)
+    
+    # Save messages
+    await kv_set(chat_id, messages)
+    
+    # Send Telegram notification to recipient
+    sender_profile = await kv_get(f"profile:{uid}") or {}
+    await send_telegram_message(
+        to_user,
+        f"💬 <b>New message from {sender_profile.get('name')}</b>\n\n\"{req.message.strip()[:100]}\"\n\nOpen the Web App to reply! 💕"
+    )
+    
+    return {"ok": True, "message": new_message}
+
+
+@app.get("/api/get_messages/{init_data}/{partner_id}")
+async def api_get_messages(init_data: str, partner_id: int):
+    user = verify_telegram_user(init_data)
+    if not user:
+        raise HTTPException(403, "Invalid user")
+    
+    uid = user.get("id")
+    
+    # Verify they are matched
+    matches = await kv_get(f"matches:{uid}") or []
+    matched_ids = [m['partner_id'] for m in matches]
+    if partner_id not in matched_ids:
+        raise HTTPException(403, "You are not matched with this user")
+    
+    # Create chat ID
+    chat_id = f"chat:{min(uid, partner_id)}:{max(uid, partner_id)}"
+    
+    # Get messages
+    messages = await kv_get(chat_id) or []
+    
+    return {"messages": messages, "user_id": uid}
 
 
 # ═════════════════════════════════════════════
@@ -257,6 +369,12 @@ FRONTEND_HTML = """<!DOCTYPE html>
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#0f0f1a 0%,#1a1a2e 100%);color:#fff;min-height:100vh;display:flex;flex-direction:column;align-items:center;overflow-x:hidden}
 .header{padding:20px;text-align:center;width:100%}
 .header h1{font-size:28px;background:linear-gradient(135deg,#ff6b9d,#c44fe2);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:bold}
+
+/* Navigation Tabs */
+.nav-tabs{display:none;width:90%;max-width:400px;margin:10px auto;background:rgba(26,26,46,0.8);border-radius:16px;padding:5px;gap:5px}
+.nav-tabs.show{display:flex}
+.nav-tab{flex:1;padding:12px;border:none;background:transparent;color:#888;font-size:14px;font-weight:600;border-radius:12px;cursor:pointer;transition:all 0.3s}
+.nav-tab.active{background:linear-gradient(135deg,#ff6b9d,#c44fe2);color:#fff}
 
 /* Progress Bar */
 .progress-bar{width:90%;max-width:400px;height:6px;background:#2a2a3a;border-radius:10px;margin:10px auto;overflow:hidden}
@@ -285,6 +403,30 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .gender-btn:active{transform:scale(0.95)}
 .gender-btn.selected{border-color:#ff6b9d;background:linear-gradient(135deg,rgba(255,107,157,0.2),rgba(196,79,226,0.2))}
 .gender-btn .emoji{font-size:40px;display:block;margin-bottom:8px}
+
+/* Find Button */
+.find-btn{width:100%;padding:18px;border-radius:16px;border:none;background:linear-gradient(135deg,#4facfe,#00f2fe);color:#fff;font-size:18px;font-weight:bold;cursor:pointer;transition:all 0.3s;box-shadow:0 10px 30px rgba(79,172,254,0.4);display:flex;align-items:center;justify-content:center;gap:10px}
+.find-btn:active{transform:scale(0.98)}
+.find-btn:disabled{opacity:0.5;cursor:not-allowed}
+.find-btn .search-icon{font-size:24px;animation:searchPulse 1.5s infinite}
+
+@keyframes searchPulse{
+  0%,100%{transform:scale(1);opacity:1}
+  50%{transform:scale(1.2);opacity:0.7}
+}
+
+/* Searching Animation */
+.searching-overlay{position:fixed;inset:0;background:rgba(15,15,26,0.95);display:none;align-items:center;justify-content:center;z-index:90;flex-direction:column;padding:20px}
+.searching-overlay.show{display:flex;animation:fadeIn 0.3s}
+.searching-spinner{width:80px;height:80px;border:6px solid rgba(255,255,255,0.1);border-top-color:#ff6b9d;border-radius:50%;animation:spin 1s linear infinite;margin-bottom:30px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.searching-text{font-size:24px;font-weight:bold;margin-bottom:10px;background:linear-gradient(135deg,#ff6b9d,#c44fe2);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.searching-subtext{font-size:16px;color:#888;text-align:center}
+
+/* Notification */
+.notification{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#4ade80,#22c55e);color:#fff;padding:18px 30px;border-radius:16px;font-size:16px;font-weight:bold;box-shadow:0 10px 40px rgba(74,222,128,0.4);z-index:200;opacity:0;pointer-events:none;transition:all 0.4s ease;max-width:90%}
+.notification.show{opacity:1;transform:translateX(-50%) translateY(10px)}
+.notification .notif-icon{font-size:28px;margin-bottom:8px;display:block;text-align:center}
 
 /* Swipe Cards */
 .card-container{position:relative;width:90%;max-width:400px;height:500px;margin:10px auto;display:none}
@@ -321,6 +463,39 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .match-name{font-size:20px;text-align:center;color:#ccc;margin-bottom:30px}
 .match-btn{padding:16px 50px;border-radius:30px;border:none;background:linear-gradient(135deg,#ff6b9d,#c44fe2);color:#fff;font-size:18px;font-weight:bold;cursor:pointer;box-shadow:0 10px 30px rgba(255,107,157,0.4)}
 
+/* Matches List */
+.matches-section{display:none;width:90%;max-width:400px;margin:20px auto}
+.matches-section.show{display:block}
+.matches-header{font-size:22px;font-weight:bold;margin-bottom:20px;color:#fff}
+.match-card{background:rgba(26,26,46,0.8);backdrop-filter:blur(10px);border-radius:16px;padding:20px;margin-bottom:15px;display:flex;align-items:center;gap:15px;cursor:pointer;transition:transform 0.2s;box-shadow:0 10px 30px rgba(0,0,0,0.3)}
+.match-card:active{transform:scale(0.98)}
+.match-avatar{width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:bold;color:#fff}
+.match-info{flex:1}
+.match-name{font-size:18px;font-weight:bold;margin-bottom:5px}
+.match-details{font-size:14px;color:#888}
+.chat-btn{padding:10px 20px;border-radius:12px;border:none;background:linear-gradient(135deg,#ff6b9d,#c44fe2);color:#fff;font-size:14px;font-weight:bold;cursor:pointer}
+
+/* Chat Section */
+.chat-section{display:none;width:100%;height:calc(100vh - 140px);flex-direction:column}
+.chat-section.show{display:flex}
+.chat-header{background:rgba(26,26,46,0.95);backdrop-filter:blur(10px);padding:20px;display:flex;align-items:center;gap:15px;border-bottom:1px solid rgba(255,255,255,0.1)}
+.back-btn{width:40px;height:40px;border-radius:50%;border:none;background:#2a2a3a;color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.chat-user-info{flex:1}
+.chat-user-name{font-size:18px;font-weight:bold}
+.chat-user-status{font-size:12px;color:#4ade80}
+
+.chat-messages{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:10px}
+.message{max-width:75%;padding:12px 16px;border-radius:16px;word-wrap:break-word}
+.message.sent{align-self:flex-end;background:linear-gradient(135deg,#ff6b9d,#c44fe2);color:#fff;border-bottom-right-radius:4px}
+.message.received{align-self:flex-start;background:#2a2a3a;color:#fff;border-bottom-left-radius:4px}
+.message-time{font-size:10px;opacity:0.7;margin-top:5px}
+
+.chat-input{background:rgba(26,26,46,0.95);backdrop-filter:blur(10px);padding:15px 20px;display:flex;gap:10px;border-top:1px solid rgba(255,255,255,0.1)}
+.chat-input input{flex:1;padding:14px 20px;border-radius:24px;border:2px solid transparent;background:#2a2a3a;color:#fff;font-size:16px}
+.chat-input input:focus{outline:none;border-color:#ff6b9d}
+.send-btn{width:50px;height:50px;border-radius:50%;border:none;background:linear-gradient(135deg,#ff6b9d,#c44fe2);color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.send-btn:disabled{opacity:0.5;cursor:not-allowed}
+
 .loading{padding:60px;text-align:center;color:#888;font-size:16px}
 .error-msg{color:#f87171;font-size:14px;text-align:center;margin-top:10px;min-height:20px}
 </style>
@@ -328,6 +503,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 <body>
 
 <div class="header"><h1>💘 Swipe Match</h1></div>
+<div class="nav-tabs" id="navTabs">
+  <button class="nav-tab active" onclick="showSection('swipe')">💘 Swipe</button>
+  <button class="nav-tab" onclick="showSection('matches')">💬 Matches</button>
+</div>
 <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
 
 <!-- Loading -->
@@ -378,6 +557,32 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   </div>
 </div>
 
+<!-- Step 4: Find Matches -->
+<div class="step" id="step4">
+  <div class="step-card">
+    <div class="step-icon">🔍</div>
+    <h2>Ready to Find Matches?</h2>
+    <p>Hum tumhare liye perfect matches dhundenge</p>
+    <button class="find-btn" onclick="findMatches()" id="findBtn">
+      <span class="search-icon">🔍</span>
+      Find Matches
+    </button>
+  </div>
+</div>
+
+<!-- Searching Overlay -->
+<div class="searching-overlay" id="searchingOverlay">
+  <div class="searching-spinner"></div>
+  <div class="searching-text">Searching for matches...</div>
+  <div class="searching-subtext">Please wait while we find perfect matches for you</div>
+</div>
+
+<!-- Notification -->
+<div class="notification" id="notification">
+  <span class="notif-icon" id="notifIcon">✨</span>
+  <div id="notifText">Matches found!</div>
+</div>
+
 <!-- Swipe Screen -->
 <div class="card-container" id="cardContainer"></div>
 <div class="buttons" id="buttons">
@@ -400,6 +605,29 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   <button class="match-btn" onclick="closeMatch()">Keep Swiping</button>
 </div>
 
+<!-- Matches Section -->
+<div class="matches-section" id="matchesSection">
+  <div class="matches-header">Your Matches 💕</div>
+  <div id="matchesList"></div>
+</div>
+
+<!-- Chat Section -->
+<div class="chat-section" id="chatSection">
+  <div class="chat-header">
+    <button class="back-btn" onclick="exitChat()">←</button>
+    <div class="chat-avatar" id="chatAvatar" style="width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:bold;color:#fff"></div>
+    <div class="chat-user-info">
+      <div class="chat-user-name" id="chatUserName">User</div>
+      <div class="chat-user-status">Online</div>
+    </div>
+  </div>
+  <div class="chat-messages" id="chatMessages"></div>
+  <div class="chat-input">
+    <input type="text" id="chatInput" placeholder="Type a message..." maxlength="500">
+    <button class="send-btn" onclick="sendMessage()" id="sendBtn">➤</button>
+  </div>
+</div>
+
 <script>
 const tg = window.Telegram.WebApp;
 tg.ready(); tg.expand();
@@ -407,6 +635,8 @@ tg.ready(); tg.expand();
 let currentStep = 1;
 let selectedGender = '';
 let profiles = [], currentIndex = 0, startX = 0, currentX = 0, isDragging = false, activeCard = null;
+let currentChatPartner = null;
+let messagePollInterval = null;
 
 const gradients = [
   'linear-gradient(135deg,#667eea,#764ba2)',
@@ -418,7 +648,7 @@ const gradients = [
 ];
 
 function updateProgress() {
-  const percent = ((currentStep - 1) / 3) * 100;
+  const percent = ((currentStep - 1) / 4) * 100;
   document.getElementById('progressFill').style.width = percent + '%';
 }
 
@@ -429,7 +659,6 @@ function showStep(n) {
   currentStep = n;
   updateProgress();
   
-  // Auto focus
   setTimeout(() => {
     const input = step.querySelector('input');
     if (input && !input.value) input.focus();
@@ -437,7 +666,6 @@ function showStep(n) {
 }
 
 function nextStep(n) {
-  // Validation
   if (currentStep === 1) {
     const name = document.getElementById('regName').value.trim();
     if (!name) {
@@ -491,6 +719,8 @@ async function init() {
       showStep(1);
     } else {
       document.getElementById('progressFill').style.width = '100%';
+      document.getElementById('navTabs').classList.add('show');
+      showSection('swipe');
       loadProfiles();
     }
   } catch (e) {
@@ -518,9 +748,7 @@ async function registerProfile() {
       body: JSON.stringify({init_data: tg.initData, name, age, gender: selectedGender})
     });
     if (res.ok) {
-      document.getElementById('progressFill').style.width = '100%';
-      document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
-      loadProfiles();
+      showStep(4);
     } else {
       btn.textContent = '🚀 Start Finding Matches';
       btn.disabled = false;
@@ -530,6 +758,231 @@ async function registerProfile() {
     btn.textContent = '🚀 Start Finding Matches';
     btn.disabled = false;
     alert('Network error!');
+  }
+}
+
+async function findMatches() {
+  const findBtn = document.getElementById('findBtn');
+  findBtn.disabled = true;
+  findBtn.innerHTML = '<span class="search-icon">⏳</span> Searching...';
+  
+  document.getElementById('searchingOverlay').classList.add('show');
+  
+  if (tg.HapticFeedback) {
+    tg.HapticFeedback.impactOccurred('medium');
+  }
+  
+  try {
+    const res = await fetch('/api/profiles/' + encodeURIComponent(tg.initData));
+    const data = await res.json();
+    profiles = data.profiles || [];
+    
+    document.getElementById('searchingOverlay').classList.remove('show');
+    
+    if (profiles.length > 0) {
+      showNotification('✨', `${profiles.length} matches found! 🎉`);
+      if (tg.HapticFeedback) {
+        tg.HapticFeedback.notificationOccurred('success');
+      }
+    } else {
+      showNotification('😢', 'No matches found yet. Try again later!');
+      if (tg.HapticFeedback) {
+        tg.HapticFeedback.notificationOccurred('error');
+      }
+    }
+    
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    document.getElementById('notification').classList.remove('show');
+    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+    document.getElementById('progressFill').style.width = '100%';
+    document.getElementById('navTabs').classList.add('show');
+    
+    if (profiles.length === 0) {
+      document.getElementById('emptyState').style.display = 'block';
+    } else {
+      document.getElementById('cardContainer').style.display = 'block';
+      document.getElementById('buttons').style.display = 'flex';
+      renderCard();
+    }
+  } catch (e) {
+    document.getElementById('searchingOverlay').classList.remove('show');
+    showNotification('❌', 'Error finding matches!');
+    if (tg.HapticFeedback) {
+      tg.HapticFeedback.notificationOccurred('error');
+    }
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    document.getElementById('notification').classList.remove('show');
+    findBtn.disabled = false;
+    findBtn.innerHTML = '<span class="search-icon">🔍</span> Find Matches';
+  }
+}
+
+function showNotification(icon, text) {
+  const notif = document.getElementById('notification');
+  document.getElementById('notifIcon').textContent = icon;
+  document.getElementById('notifText').textContent = text;
+  notif.classList.add('show');
+}
+
+function showSection(section) {
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  
+  document.getElementById('cardContainer').style.display = 'none';
+  document.getElementById('buttons').style.display = 'none';
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('matchesSection').classList.remove('show');
+  document.getElementById('chatSection').classList.remove('show');
+  
+  if (section === 'swipe') {
+    if (profiles.length > 0 && currentIndex < profiles.length) {
+      document.getElementById('cardContainer').style.display = 'block';
+      document.getElementById('buttons').style.display = 'flex';
+    } else if (currentIndex >= profiles.length) {
+      document.getElementById('emptyState').style.display = 'block';
+    } else {
+      loadProfiles();
+    }
+  } else if (section === 'matches') {
+    document.getElementById('matchesSection').classList.add('show');
+    loadMatches();
+  }
+}
+
+async function loadMatches() {
+  const matchesList = document.getElementById('matchesList');
+  matchesList.innerHTML = '<div class="loading">Loading matches...</div>';
+  
+  try {
+    const res = await fetch('/api/matches/' + encodeURIComponent(tg.initData));
+    const data = await res.json();
+    const matches = data.matches || [];
+    
+    if (matches.length === 0) {
+      matchesList.innerHTML = '<div class="empty-state"><div class="emoji">😢</div><h3>No matches yet</h3><p>Keep swiping to find your match!</p></div>';
+      return;
+    }
+    
+    matchesList.innerHTML = matches.map(m => `
+      <div class="match-card" onclick="openChat(${m.user_id}, '${escapeHtml(m.name)}', '${m.gender}')">
+        <div class="match-avatar" style="background:${gradients[m.user_id % gradients.length]}">
+          ${m.name.charAt(0).toUpperCase()}
+        </div>
+        <div class="match-info">
+          <div class="match-name">${escapeHtml(m.name)}</div>
+          <div class="match-details">${m.age} years old • ${m.gender === 'male' ? '👨 Boy' : '👩 Girl'}</div>
+        </div>
+        <button class="chat-btn">💬 Chat</button>
+      </div>
+    `).join('');
+  } catch (e) {
+    matchesList.innerHTML = '<div class="error-msg">Error loading matches</div>';
+  }
+}
+
+function openChat(userId, name, gender) {
+  currentChatPartner = {userId, name, gender};
+  
+  document.getElementById('matchesSection').classList.remove('show');
+  document.getElementById('chatSection').classList.add('show');
+  
+  document.getElementById('chatAvatar').textContent = name.charAt(0).toUpperCase();
+  document.getElementById('chatAvatar').style.background = gradients[userId % gradients.length];
+  document.getElementById('chatUserName').textContent = name;
+  
+  loadMessages();
+  startMessagePolling();
+}
+
+function exitChat() {
+  currentChatPartner = null;
+  stopMessagePolling();
+  document.getElementById('chatSection').classList.remove('show');
+  document.getElementById('matchesSection').classList.add('show');
+}
+
+async function loadMessages() {
+  if (!currentChatPartner) return;
+  
+  const chatMessages = document.getElementById('chatMessages');
+  chatMessages.innerHTML = '<div class="loading">Loading messages...</div>';
+  
+  try {
+    const res = await fetch(`/api/get_messages/${encodeURIComponent(tg.initData)}/${currentChatPartner.userId}`);
+    const data = await res.json();
+    const messages = data.messages || [];
+    const userId = data.user_id;
+    
+    if (messages.length === 0) {
+      chatMessages.innerHTML = '<div class="empty-state"><div class="emoji">💬</div><h3>Start the conversation!</h3><p>Say hi to your match</p></div>';
+      return;
+    }
+    
+    chatMessages.innerHTML = messages.map(m => {
+      const isSent = m.from === userId;
+      const time = new Date(m.timestamp).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+      return `
+        <div class="message ${isSent ? 'sent' : 'received'}">
+          <div>${escapeHtml(m.text)}</div>
+          <div class="message-time">${time}</div>
+        </div>
+      `;
+    }).join('');
+    
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  } catch (e) {
+    chatMessages.innerHTML = '<div class="error-msg">Error loading messages</div>';
+  }
+}
+
+async function sendMessage() {
+  if (!currentChatPartner) return;
+  
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if (!text) return;
+  
+  const sendBtn = document.getElementById('sendBtn');
+  sendBtn.disabled = true;
+  
+  try {
+    const res = await fetch('/api/send_message', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        init_data: tg.initData,
+        to_user: currentChatPartner.userId,
+        message: text
+      })
+    });
+    
+    if (res.ok) {
+      input.value = '';
+      loadMessages();
+    } else {
+      alert('Error sending message');
+    }
+  } catch (e) {
+    alert('Network error!');
+  }
+  
+  sendBtn.disabled = false;
+}
+
+function startMessagePolling() {
+  stopMessagePolling();
+  messagePollInterval = setInterval(() => {
+    if (currentChatPartner) {
+      loadMessages();
+    }
+  }, 3000);
+}
+
+function stopMessagePolling() {
+  if (messagePollInterval) {
+    clearInterval(messagePollInterval);
+    messagePollInterval = null;
   }
 }
 
@@ -678,11 +1131,15 @@ function closeMatch() {
   document.getElementById('matchModal').classList.remove('show');
 }
 
-// Enter key support
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') {
-    if (currentStep === 1) nextStep(2);
-    else if (currentStep === 2) nextStep(3);
+    if (currentChatPartner) {
+      sendMessage();
+    } else if (currentStep === 1) {
+      nextStep(2);
+    } else if (currentStep === 2) {
+      nextStep(3);
+    }
   }
 });
 
