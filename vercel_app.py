@@ -26,8 +26,8 @@ from pydantic import BaseModel
 # CONFIG (Vercel Dashboard → Settings → Environment Variables me set karo)
 # ─────────────────────────────────────────────
 BOT_TOKEN =("8859077363:AAEY5IvqLjvp2KHFi-sDeihrGCKmTu1vrtU")
-KV_URL =("KV_REST_API_URL")
-KV_TOKEN =("KV_REST_API_TOKEN")
+KV_URL =("https://prompt-quetzal-219477.upstash.io")
+KV_TOKEN =("********")
 
 app = FastAPI(title="Dating Swipe App")
 
