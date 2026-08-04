@@ -1,8 +1,9 @@
 """
-Telegram Dating Bot — Swipe Matching Web App (VERCEL VERSION)
-==============================================================
-Serverless FastAPI app. Storage = Vercel KV (free).
-HTML frontend code ke andar embedded hai (koi static folder nahi chahiye).
+Telegram Dating Bot — Swipe Matching Web App (VERCEL VERSION - FIXED)
+======================================================================
+✅ Step-by-step registration: Name → Age → Gender → Match
+✅ Better UI with smooth transitions
+✅ Proper validation
 """
 
 from __future__ import annotations
@@ -23,15 +24,15 @@ from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
 # ─────────────────────────────────────────────
-# CONFIG (Vercel Dashboard → Settings → Environment Variables me set karo)
+# CONFIG
 # ─────────────────────────────────────────────
-BOT_TOKEN =("8859077363:AAEY5IvqLjvp2KHFi-sDeihrGCKmTu1vrtU")
-KV_URL =("https://prompt-quetzal-219477.upstash.io")
-KV_TOKEN =("ggAAAAAAA1lVAAIgcDECZqGNn4s9xuEezqSIxvU8XvbqsdNhFWCEEGpm8Lf0Zw")
+BOT_TOKEN = "8859077363:AAEY5IvqLjvp2KHFi-sDeihrGCKmTu1vrtU"
+KV_URL = "https://prompt-quetzal-219477.upstash.io"
+KV_TOKEN = "ggAAAAAAA1lVAAIgcDECZqGNn4s9xuEezqSIxvU8XvbqsdNhFWCEEGpm8Lf0Zw"
 
 app = FastAPI(title="Dating Swipe App")
 
-# Fallback in-memory storage (agar KV set nahi hai to app crash nahi hogi)
+# Fallback in-memory storage
 _mem: dict[str, Any] = {}
 
 
@@ -183,7 +184,6 @@ async def api_profiles(init_data: str):
         pid = p["user_id"]
         if pid in seen:
             continue
-        # Matching: opposite gender
         if my_profile["gender"] == "male" and p["gender"] != "female":
             continue
         if my_profile["gender"] == "female" and p["gender"] != "male":
@@ -208,7 +208,6 @@ async def api_swipe(req: SwipeRequest):
     if req.action == "like":
         if req.target_id not in swipes["liked"]:
             swipes["liked"].append(req.target_id)
-        # Mutual like check
         target_swipes = await kv_get(f"swipes:{req.target_id}") or {"liked": [], "passed": []}
         if uid in target_swipes["liked"]:
             matched = True
@@ -217,7 +216,6 @@ async def api_swipe(req: SwipeRequest):
                 "name": target_profile.get("name", "Someone"),
                 "age": target_profile.get("age"),
             }
-            # Match save karo (dono ke liye)
             for key_uid, other_uid in ((uid, req.target_id), (req.target_id, uid)):
                 matches = await kv_get(f"matches:{key_uid}") or []
                 matches.append({"partner_id": other_uid, "created_at": datetime.now(timezone.utc).isoformat()})
@@ -245,7 +243,7 @@ async def api_matches(init_data: str):
 
 
 # ═════════════════════════════════════════════
-# FRONTEND HTML (Embedded)
+# FRONTEND HTML (Embedded - Step-by-Step)
 # ═════════════════════════════════════════════
 FRONTEND_HTML = """<!DOCTYPE html>
 <html lang="en">
@@ -256,69 +254,148 @@ FRONTEND_HTML = """<!DOCTYPE html>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0f0f1a;color:#fff;min-height:100vh;display:flex;flex-direction:column;align-items:center;overflow:hidden}
-.header{padding:20px;text-align:center}
-.header h1{font-size:24px;background:linear-gradient(135deg,#ff6b9d,#c44fe2);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.card-container{position:relative;width:90%;max-width:400px;height:480px;margin:10px auto}
-.card{position:absolute;width:100%;height:100%;border-radius:24px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.5);cursor:grab;user-select:none;touch-action:none}
-.card-avatar{width:100%;height:65%;display:flex;align-items:center;justify-content:center;font-size:80px;font-weight:bold;color:rgba(255,255,255,.9)}
-.card-info{padding:20px;background:rgba(15,15,26,.95);height:35%}
-.card-name{font-size:28px;font-weight:bold;margin-bottom:4px}
-.card-age{font-size:20px;color:#ff6b9d;font-weight:600}
-.card-gender{font-size:14px;color:#888;margin-top:8px}
-.swipe-label{position:absolute;top:30px;padding:8px 20px;border-radius:12px;font-size:32px;font-weight:bold;opacity:0;pointer-events:none}
-.swipe-label.like{right:20px;color:#4ade80;border:4px solid #4ade80;transform:rotate(15deg)}
-.swipe-label.pass{left:20px;color:#f87171;border:4px solid #f87171;transform:rotate(-15deg)}
-.buttons{display:flex;gap:30px;margin:20px 0}
-.btn{width:70px;height:70px;border-radius:50%;border:none;font-size:32px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px rgba(0,0,0,.3)}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#0f0f1a 0%,#1a1a2e 100%);color:#fff;min-height:100vh;display:flex;flex-direction:column;align-items:center;overflow-x:hidden}
+.header{padding:20px;text-align:center;width:100%}
+.header h1{font-size:28px;background:linear-gradient(135deg,#ff6b9d,#c44fe2);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:bold}
+
+/* Progress Bar */
+.progress-bar{width:90%;max-width:400px;height:6px;background:#2a2a3a;border-radius:10px;margin:10px auto;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,#ff6b9d,#c44fe2);transition:width 0.5s ease;width:0%}
+
+/* Registration Steps */
+.step{display:none;width:90%;max-width:400px;animation:fadeIn 0.4s ease}
+.step.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+.step-card{background:rgba(26,26,46,0.8);backdrop-filter:blur(10px);border-radius:24px;padding:30px;margin-top:20px;box-shadow:0 20px 60px rgba(0,0,0,0.3)}
+.step-icon{font-size:60px;text-align:center;margin-bottom:15px}
+.step h2{font-size:22px;text-align:center;margin-bottom:8px;color:#fff}
+.step p{font-size:14px;text-align:center;color:#888;margin-bottom:25px}
+
+.step input,.step select{width:100%;padding:16px 20px;margin-bottom:15px;border-radius:16px;border:2px solid transparent;background:#2a2a3a;color:#fff;font-size:16px;transition:border 0.3s}
+.step input:focus,.step select:focus{outline:none;border-color:#ff6b9d}
+.step input::placeholder{color:#666}
+
+.step button{width:100%;padding:16px;border-radius:16px;border:none;background:linear-gradient(135deg,#ff6b9d,#c44fe2);color:#fff;font-size:18px;font-weight:bold;cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;box-shadow:0 10px 30px rgba(255,107,157,0.3)}
+.step button:active{transform:scale(0.98)}
+.step button:disabled{opacity:0.5;cursor:not-allowed}
+
+.gender-options{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:20px}
+.gender-btn{padding:25px 15px;border-radius:16px;border:2px solid #2a2a3a;background:#1a1a2e;color:#fff;font-size:16px;cursor:pointer;transition:all 0.3s;text-align:center}
+.gender-btn:active{transform:scale(0.95)}
+.gender-btn.selected{border-color:#ff6b9d;background:linear-gradient(135deg,rgba(255,107,157,0.2),rgba(196,79,226,0.2))}
+.gender-btn .emoji{font-size:40px;display:block;margin-bottom:8px}
+
+/* Swipe Cards */
+.card-container{position:relative;width:90%;max-width:400px;height:500px;margin:10px auto;display:none}
+.card{position:absolute;width:100%;height:100%;border-radius:24px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.5);cursor:grab;user-select:none;touch-action:none;transition:transform 0.1s}
+.card:active{cursor:grabbing}
+.card-avatar{width:100%;height:60%;display:flex;align-items:center;justify-content:center;font-size:100px;font-weight:bold;color:rgba(255,255,255,0.95);text-shadow:0 4px 20px rgba(0,0,0,0.3)}
+.card-info{padding:25px;background:rgba(15,15,26,0.95);height:40%;backdrop-filter:blur(10px)}
+.card-name{font-size:32px;font-weight:bold;margin-bottom:5px}
+.card-age{font-size:22px;color:#ff6b9d;font-weight:600;margin-bottom:8px}
+.card-gender{font-size:16px;color:#888;display:flex;align-items:center;gap:8px}
+.card-gender::before{content:'';width:8px;height:8px;border-radius:50%;background:currentColor}
+
+.swipe-label{position:absolute;top:40px;padding:10px 25px;border-radius:12px;font-size:28px;font-weight:bold;opacity:0;pointer-events:none;text-shadow:0 2px 10px rgba(0,0,0,0.3)}
+.swipe-label.like{right:25px;color:#4ade80;border:4px solid #4ade80;transform:rotate(15deg);background:rgba(74,222,128,0.1)}
+.swipe-label.pass{left:25px;color:#f87171;border:4px solid #f87171;transform:rotate(-15deg);background:rgba(248,113,113,0.1)}
+
+.buttons{display:none;gap:40px;margin:25px 0;justify-content:center}
+.btn{width:75px;height:75px;border-radius:50%;border:none;font-size:34px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 30px rgba(0,0,0,0.3);transition:transform 0.2s}
+.btn:active{transform:scale(0.9)}
 .btn-pass{background:#2a2a3a;color:#f87171}
 .btn-like{background:#2a2a3a;color:#4ade80}
-.empty-state{text-align:center;padding:60px 20px;color:#888}
-.empty-state .emoji{font-size:60px;margin-bottom:20px}
-.match-modal{position:fixed;inset:0;background:rgba(0,0,0,.9);display:none;align-items:center;justify-content:center;z-index:100;flex-direction:column}
-.match-modal.show{display:flex}
-.match-title{font-size:48px;font-weight:bold;background:linear-gradient(135deg,#ff6b9d,#c44fe2);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.match-name{font-size:24px;margin:20px 0}
-.match-btn{padding:15px 40px;border-radius:30px;border:none;background:linear-gradient(135deg,#ff6b9d,#c44fe2);color:#fff;font-size:18px;font-weight:bold;cursor:pointer;margin-top:20px}
-/* Register Form */
-.reg-box{width:90%;max-width:400px;background:#1a1a2e;border-radius:24px;padding:30px;margin-top:20px}
-.reg-box h2{margin-bottom:20px;text-align:center}
-.reg-box input,.reg-box select{width:100%;padding:14px;margin-bottom:15px;border-radius:12px;border:none;background:#2a2a3a;color:#fff;font-size:16px}
-.reg-box button{width:100%;padding:15px;border-radius:12px;border:none;background:linear-gradient(135deg,#ff6b9d,#c44fe2);color:#fff;font-size:18px;font-weight:bold;cursor:pointer}
-.loading{padding:60px;text-align:center;color:#888}
+
+.empty-state{display:none;text-align:center;padding:60px 30px;width:90%;max-width:400px}
+.empty-state .emoji{font-size:80px;margin-bottom:25px}
+.empty-state h3{font-size:24px;margin-bottom:10px;color:#fff}
+.empty-state p{font-size:16px;color:#888;line-height:1.6}
+
+/* Match Modal */
+.match-modal{position:fixed;inset:0;background:rgba(0,0,0,0.95);display:none;align-items:center;justify-content:center;z-index:100;flex-direction:column;padding:20px}
+.match-modal.show{display:flex;animation:fadeIn 0.3s}
+.match-hearts{font-size:80px;margin-bottom:20px;animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+.match-title{font-size:42px;font-weight:bold;background:linear-gradient(135deg,#ff6b9d,#c44fe2);-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-align:center;margin-bottom:15px}
+.match-name{font-size:20px;text-align:center;color:#ccc;margin-bottom:30px}
+.match-btn{padding:16px 50px;border-radius:30px;border:none;background:linear-gradient(135deg,#ff6b9d,#c44fe2);color:#fff;font-size:18px;font-weight:bold;cursor:pointer;box-shadow:0 10px 30px rgba(255,107,157,0.4)}
+
+.loading{padding:60px;text-align:center;color:#888;font-size:16px}
+.error-msg{color:#f87171;font-size:14px;text-align:center;margin-top:10px;min-height:20px}
 </style>
 </head>
 <body>
-<div class="header"><h1>💘 Swipe Match</h1></div>
 
+<div class="header"><h1>💘 Swipe Match</h1></div>
+<div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+
+<!-- Loading -->
 <div class="loading" id="loading">Loading...</div>
 
-<!-- Register Screen -->
-<div class="reg-box" id="regBox" style="display:none">
-  <h2>✨ Profile Banao</h2>
-  <input id="regName" placeholder="Apna Naam" maxlength="50">
-  <input id="regAge" type="number" placeholder="Age" min="13" max="100">
-  <select id="regGender">
-    <option value="">Gender select karo</option>
-    <option value="male">👨 Boy</option>
-    <option value="female">👩 Girl</option>
-  </select>
-  <button onclick="register()">🚀 Start Swiping</button>
+<!-- Step 1: Name -->
+<div class="step" id="step1">
+  <div class="step-card">
+    <div class="step-icon">👋</div>
+    <h2>Tumhara Naam Kya Hai?</h2>
+    <p>Apna pehla naam batao</p>
+    <input type="text" id="regName" placeholder="e.g. Rahul" maxlength="50" autocomplete="off">
+    <div class="error-msg" id="nameError"></div>
+    <button onclick="nextStep(2)" id="btn1">Continue →</button>
+  </div>
+</div>
+
+<!-- Step 2: Age -->
+<div class="step" id="step2">
+  <div class="step-card">
+    <div class="step-icon">🎂</div>
+    <h2>Tumhari Age Kya Hai?</h2>
+    <p>13-100 ke beech honi chahiye</p>
+    <input type="number" id="regAge" placeholder="e.g. 24" min="13" max="100" autocomplete="off">
+    <div class="error-msg" id="ageError"></div>
+    <button onclick="nextStep(3)" id="btn2">Continue →</button>
+  </div>
+</div>
+
+<!-- Step 3: Gender -->
+<div class="step" id="step3">
+  <div class="step-card">
+    <div class="step-icon">👤</div>
+    <h2>Tum Kaun Ho?</h2>
+    <p>Apna gender select karo</p>
+    <div class="gender-options">
+      <button class="gender-btn" onclick="selectGender('male', this)">
+        <span class="emoji">👨</span>
+        Boy
+      </button>
+      <button class="gender-btn" onclick="selectGender('female', this)">
+        <span class="emoji">👩</span>
+        Girl
+      </button>
+    </div>
+    <div class="error-msg" id="genderError"></div>
+    <button onclick="registerProfile()" id="btn3" disabled>🚀 Start Finding Matches</button>
+  </div>
 </div>
 
 <!-- Swipe Screen -->
-<div class="card-container" id="cardContainer" style="display:none"></div>
-<div class="buttons" id="buttons" style="display:none">
+<div class="card-container" id="cardContainer"></div>
+<div class="buttons" id="buttons">
   <button class="btn btn-pass" onclick="swipe('pass')">✖️</button>
   <button class="btn btn-like" onclick="swipe('like')">❤️</button>
 </div>
-<div class="empty-state" id="emptyState" style="display:none">
-  <div class="emoji">😢</div><p id="emptyText">Abhi koi profiles nahi hai.</p>
+
+<!-- Empty State -->
+<div class="empty-state" id="emptyState">
+  <div class="emoji">😢</div>
+  <h3>Koi Matches Nahi Mile</h3>
+  <p id="emptyText">Abhi koi profiles nahi hai.<br>Thodi der baad wapas aao!</p>
 </div>
 
 <!-- Match Modal -->
 <div class="match-modal" id="matchModal">
-  <div class="match-title">🎉 It's a Match!</div>
+  <div class="match-hearts">💕</div>
+  <div class="match-title">It's a Match!</div>
   <div class="match-name" id="matchName"></div>
   <button class="match-btn" onclick="closeMatch()">Keep Swiping</button>
 </div>
@@ -327,47 +404,145 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 const tg = window.Telegram.WebApp;
 tg.ready(); tg.expand();
 
+let currentStep = 1;
+let selectedGender = '';
 let profiles = [], currentIndex = 0, startX = 0, currentX = 0, isDragging = false, activeCard = null;
+
 const gradients = [
-  'linear-gradient(135deg,#667eea,#764ba2)','linear-gradient(135deg,#f093fb,#f5576c)',
-  'linear-gradient(135deg,#4facfe,#00f2fe)','linear-gradient(135deg,#43e97b,#38f9d7)',
-  'linear-gradient(135deg,#fa709a,#fee140)','linear-gradient(135deg,#30cfd0,#330867)'
+  'linear-gradient(135deg,#667eea,#764ba2)',
+  'linear-gradient(135deg,#f093fb,#f5576c)',
+  'linear-gradient(135deg,#4facfe,#00f2fe)',
+  'linear-gradient(135deg,#43e97b,#38f9d7)',
+  'linear-gradient(135deg,#fa709a,#fee140)',
+  'linear-gradient(135deg,#30cfd0,#330867)'
 ];
+
+function updateProgress() {
+  const percent = ((currentStep - 1) / 3) * 100;
+  document.getElementById('progressFill').style.width = percent + '%';
+}
+
+function showStep(n) {
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+  const step = document.getElementById('step' + n);
+  if (step) step.classList.add('active');
+  currentStep = n;
+  updateProgress();
+  
+  // Auto focus
+  setTimeout(() => {
+    const input = step.querySelector('input');
+    if (input && !input.value) input.focus();
+  }, 100);
+}
+
+function nextStep(n) {
+  // Validation
+  if (currentStep === 1) {
+    const name = document.getElementById('regName').value.trim();
+    if (!name) {
+      document.getElementById('nameError').textContent = '❌ Naam likhna zaroori hai!';
+      return;
+    }
+    if (name.length < 2) {
+      document.getElementById('nameError').textContent = '❌ Naam bahut chhota hai!';
+      return;
+    }
+    document.getElementById('nameError').textContent = '';
+  }
+  
+  if (currentStep === 2) {
+    const age = parseInt(document.getElementById('regAge').value);
+    if (!age || isNaN(age)) {
+      document.getElementById('ageError').textContent = '❌ Age likhna zaroori hai!';
+      return;
+    }
+    if (age < 13 || age > 100) {
+      document.getElementById('ageError').textContent = '❌ Age 13-100 ke beech honi chahiye!';
+      return;
+    }
+    document.getElementById('ageError').textContent = '';
+  }
+  
+  showStep(n);
+}
+
+function selectGender(gender, btn) {
+  selectedGender = gender;
+  document.querySelectorAll('.gender-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  document.getElementById('btn3').disabled = false;
+  document.getElementById('genderError').textContent = '';
+}
 
 async function init() {
   try {
-    const res = await fetch('/api/init', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({init_data: tg.initData})});
+    const res = await fetch('/api/init', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({init_data: tg.initData})
+    });
     if (!res.ok) throw new Error('Auth failed');
     const data = await res.json();
     document.getElementById('loading').style.display = 'none';
+    
     if (!data.has_profile) {
-      document.getElementById('regBox').style.display = 'block';
       document.getElementById('regName').value = data.tg_name || '';
+      showStep(1);
     } else {
+      document.getElementById('progressFill').style.width = '100%';
       loadProfiles();
     }
   } catch (e) {
-    document.getElementById('loading').innerHTML = '❌ Error. Bot se dobara kholo.';
+    document.getElementById('loading').innerHTML = '❌ Error aaya. Bot se dobara kholo.';
   }
 }
 
-async function register() {
+async function registerProfile() {
+  if (!selectedGender) {
+    document.getElementById('genderError').textContent = '❌ Gender select karo!';
+    return;
+  }
+  
   const name = document.getElementById('regName').value.trim();
   const age = parseInt(document.getElementById('regAge').value);
-  const gender = document.getElementById('regGender').value;
-  if (!name || !age || !gender) { alert('Sab fields bharo!'); return; }
-  const res = await fetch('/api/register', {method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({init_data: tg.initData, name, age, gender})});
-  if (res.ok) {
-    document.getElementById('regBox').style.display = 'none';
-    loadProfiles();
-  } else { alert('Error aaya, dobara try karo.'); }
+  
+  const btn = document.getElementById('btn3');
+  btn.textContent = 'Saving...';
+  btn.disabled = true;
+  
+  try {
+    const res = await fetch('/api/register', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({init_data: tg.initData, name, age, gender: selectedGender})
+    });
+    if (res.ok) {
+      document.getElementById('progressFill').style.width = '100%';
+      document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+      loadProfiles();
+    } else {
+      btn.textContent = '🚀 Start Finding Matches';
+      btn.disabled = false;
+      alert('Error aaya, dobara try karo.');
+    }
+  } catch (e) {
+    btn.textContent = '🚀 Start Finding Matches';
+    btn.disabled = false;
+    alert('Network error!');
+  }
 }
 
 async function loadProfiles() {
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('loading').textContent = 'Finding matches for you...';
+  
   const res = await fetch('/api/profiles/' + encodeURIComponent(tg.initData));
   const data = await res.json();
   profiles = data.profiles || [];
+  
+  document.getElementById('loading').style.display = 'none';
+  
   if (profiles.length === 0) {
     document.getElementById('emptyState').style.display = 'block';
   } else {
@@ -380,77 +555,136 @@ async function loadProfiles() {
 function renderCard() {
   const container = document.getElementById('cardContainer');
   container.innerHTML = '';
+  
   if (currentIndex >= profiles.length) {
     container.style.display = 'none';
     document.getElementById('buttons').style.display = 'none';
     document.getElementById('emptyState').style.display = 'block';
-    document.getElementById('emptyText').innerHTML = '🎉 Sab profiles dekh liye!';
+    document.getElementById('emptyText').innerHTML = '🎉 Sab profiles dekh liye!<br>Kal phir aao.';
     return;
   }
+  
   const p = profiles[currentIndex];
   const card = document.createElement('div');
   card.className = 'card';
   card.style.background = gradients[currentIndex % gradients.length];
+  
   const initial = (p.name || 'U').charAt(0).toUpperCase();
-  const genderText = p.gender === 'male' ? '👨 Boy' : '👩 Girl';
+  const genderText = p.gender === 'male' ? 'Boy' : 'Girl';
+  const genderEmoji = p.gender === 'male' ? '👨' : '👩';
+  
   card.innerHTML = `
     <div class="swipe-label like">LIKE</div>
-    <div class="swipe-label pass">PASS</div>
+    <div class="swipe-label pass">NOPE</div>
     <div class="card-avatar">${initial}</div>
     <div class="card-info">
       <div class="card-name">${escapeHtml(p.name)}</div>
-      <div class="card-age">${p.age} years</div>
-      <div class="card-gender">${genderText}</div>
+      <div class="card-age">${p.age} years old</div>
+      <div class="card-gender" style="color:${p.gender === 'male' ? '#4facfe' : '#f093fb'}">${genderEmoji} ${genderText}</div>
     </div>`;
-  card.addEventListener('touchstart', dragStart, {passive:true});
-  card.addEventListener('touchmove', dragMove, {passive:false});
+  
+  card.addEventListener('touchstart', dragStart, {passive: true});
+  card.addEventListener('touchmove', dragMove, {passive: false});
   card.addEventListener('touchend', dragEnd);
   card.addEventListener('mousedown', dragStart);
+  
   container.appendChild(card);
   activeCard = card;
 }
 
-function escapeHtml(t){const d=document.createElement('div');d.textContent=t;return d.innerHTML}
-function dragStart(e){isDragging=true;startX=e.type==='touchstart'?e.touches[0].clientX:e.clientX;
-  if(e.type==='mousedown'){document.addEventListener('mousemove',dragMove);document.addEventListener('mouseup',dragEnd)}}
-function dragMove(e){if(!isDragging||!activeCard)return;if(e.type==='touchmove')e.preventDefault();
-  currentX=(e.type==='touchmove'?e.touches[0].clientX:e.clientX)-startX;
-  activeCard.style.transform=`translateX(${currentX}px) rotate(${currentX/20}deg)`;
-  activeCard.querySelector('.swipe-label.like').style.opacity=currentX>50?Math.min((currentX-50)/100,1):0;
-  activeCard.querySelector('.swipe-label.pass').style.opacity=currentX<-50?Math.min((-currentX-50)/100,1):0}
-function dragEnd(){if(!isDragging||!activeCard)return;isDragging=false;
-  document.removeEventListener('mousemove',dragMove);document.removeEventListener('mouseup',dragEnd);
-  if(currentX>100)animateOut('like');else if(currentX<-100)animateOut('pass');
-  else{activeCard.style.transition='transform .3s';activeCard.style.transform='translateX(0)'}
-  currentX=0}
-function swipe(a){if(activeCard)animateOut(a)}
+function escapeHtml(t) {
+  const d = document.createElement('div');
+  d.textContent = t;
+  return d.innerHTML;
+}
+
+function dragStart(e) {
+  isDragging = true;
+  startX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+  if (e.type === 'mousedown') {
+    document.addEventListener('mousemove', dragMove);
+    document.addEventListener('mouseup', dragEnd);
+  }
+}
+
+function dragMove(e) {
+  if (!isDragging || !activeCard) return;
+  if (e.type === 'touchmove') e.preventDefault();
+  
+  currentX = (e.type === 'touchmove' ? e.touches[0].clientX : e.clientX) - startX;
+  const rotation = currentX / 25;
+  activeCard.style.transform = `translateX(${currentX}px) rotate(${rotation}deg)`;
+  
+  const likeLabel = activeCard.querySelector('.swipe-label.like');
+  const passLabel = activeCard.querySelector('.swipe-label.pass');
+  likeLabel.style.opacity = currentX > 60 ? Math.min((currentX - 60) / 100, 1) : 0;
+  passLabel.style.opacity = currentX < -60 ? Math.min((-currentX - 60) / 100, 1) : 0;
+}
+
+function dragEnd() {
+  if (!isDragging || !activeCard) return;
+  isDragging = false;
+  document.removeEventListener('mousemove', dragMove);
+  document.removeEventListener('mouseup', dragEnd);
+  
+  if (currentX > 120) animateOut('like');
+  else if (currentX < -120) animateOut('pass');
+  else {
+    activeCard.style.transition = 'transform 0.3s';
+    activeCard.style.transform = 'translateX(0) rotate(0)';
+  }
+  currentX = 0;
+}
+
+function swipe(action) {
+  if (activeCard) animateOut(action);
+}
 
 function animateOut(action) {
   if (!activeCard) return;
   const card = activeCard;
   const dir = action === 'like' ? 1 : -1;
-  card.style.transition = 'transform .4s, opacity .4s';
-  card.style.transform = `translateX(${dir*500}px) rotate(${dir*30}deg)`;
+  
+  card.style.transition = 'transform 0.4s, opacity 0.4s';
+  card.style.transform = `translateX(${dir * 600}px) rotate(${dir * 30}deg)`;
   card.style.opacity = '0';
+  
   const targetId = profiles[currentIndex].user_id;
   currentIndex++;
+  
   setTimeout(async () => {
     try {
-      const res = await fetch('/api/swipe', {method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({init_data: tg.initData, target_id: targetId, action})});
+      const res = await fetch('/api/swipe', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({init_data: tg.initData, target_id: targetId, action})
+      });
       const data = await res.json();
       if (data.matched && data.match_info) showMatch(data.match_info);
     } catch (e) {}
     renderCard();
-  }, 300);
+  }, 350);
+  
   activeCard = null;
 }
 
-function showMatch(info){
+function showMatch(info) {
   document.getElementById('matchName').textContent = `You and ${info.name} liked each other! 💕`;
   document.getElementById('matchModal').classList.add('show');
+  if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
 }
-function closeMatch(){document.getElementById('matchModal').classList.remove('show')}
+
+function closeMatch() {
+  document.getElementById('matchModal').classList.remove('show');
+}
+
+// Enter key support
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    if (currentStep === 1) nextStep(2);
+    else if (currentStep === 2) nextStep(3);
+  }
+});
 
 init();
 </script>
