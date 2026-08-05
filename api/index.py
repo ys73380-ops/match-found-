@@ -1,10 +1,11 @@
 """
 Telegram Dating Bot — Swipe Matching Web App (VERCEL VERSION - FIXED)
 ======================================================================
-✅ Step-by-step registration: Name → Age → Gender → Match
-✅ Better UI with smooth transitions
+✅ Step-by-step registration: Name → Age → Gender → Match Mode
+✅ Find Real: Notifies user via bot when real matches found
+✅ Find AI: Instant AI-generated match profiles to swipe & chat
+✅ Better UI with smooth transitions & premium design
 ✅ Proper validation
-✅ Find button with notification when matches found
 ✅ Telegram message notification when matches found
 ✅ Chat feature between matched users
 """
@@ -37,6 +38,32 @@ app = FastAPI(title="Dating Swipe App")
 
 # Fallback in-memory storage
 _mem: dict[str, Any] = {}
+
+# AI Match names pool
+AI_MALE_NAMES = [
+    "Arjun", "Rohan", "Aarav", "Vivaan", "Aditya", "Kabir", "Ishaan", "Reyansh",
+    "Ayaan", "Vihaan", "Dhruv", "Arnav", "Shaurya", "Yash", "Krish", "Siddharth",
+    "Raj", "Dev", "Ansh", "Kartik", "Neil", "Aarush", "Ranveer", "Samar"
+]
+AI_FEMALE_NAMES = [
+    "Ananya", "Priya", "Isha", "Myra", "Aanya", "Saanvi", "Kiara", "Diya",
+    "Riya", "Tara", "Avni", "Kavya", "Zara", "Nisha", "Meera", "Pooja",
+    "Aisha", "Sneha", "Pihu", "Sara", "Simran", "Rhea", "Mahi", "Navya"
+]
+AI_BIOS = [
+    "Music lover 🎵 | Coffee addict ☕",
+    "Travel enthusiast ✈️ | Foodie 🍕",
+    "Gym freak 💪 | Netflix binge-watcher 🎬",
+    "Photography 📸 | Adventure seeker 🏔️",
+    "Bookworm 📚 | Tea lover 🍵",
+    "Dog person 🐕 | Sunset chaser 🌅",
+    "Gamer 🎮 | Anime fan 🎌",
+    "Dancer 💃 | Night owl 🦉",
+    "Artist 🎨 | Dreamer ✨",
+    "Tech geek 💻 | Startup enthusiast 🚀",
+    "Yoga practitioner 🧘 | Healthy living 🥗",
+    "Singer 🎤 | Party animal 🎉",
+]
 
 
 # ─────────────────────────────────────────────
@@ -146,6 +173,62 @@ class MessageRequest(BaseModel):
     init_data: str
     to_user: int
     message: str
+
+class FindRealRequest(BaseModel):
+    init_data: str
+
+class AIMessageRequest(BaseModel):
+    init_data: str
+    ai_profile_id: str
+    message: str
+
+
+# ─────────────────────────────────────────────
+# AI PROFILE GENERATION
+# ─────────────────────────────────────────────
+def generate_ai_profiles(my_gender: str, count: int = 10) -> list[dict]:
+    """Generate random AI profiles for the user to swipe on"""
+    names = AI_FEMALE_NAMES if my_gender == "male" else AI_MALE_NAMES
+    target_gender = "female" if my_gender == "male" else "male"
+    
+    selected_names = random.sample(names, min(count, len(names)))
+    profiles = []
+    for i, name in enumerate(selected_names):
+        profiles.append({
+            "user_id": f"ai_{random.randint(100000, 999999)}_{i}",
+            "name": name,
+            "age": random.randint(18, 30),
+            "gender": target_gender,
+            "bio": random.choice(AI_BIOS),
+            "is_ai": True
+        })
+    return profiles
+
+
+AI_RESPONSES = {
+    "hi": ["Hey! 😊 Kaisi ho?", "Hello! 💕 Kya haal hai?", "Hi there! ✨ Nice to meet you!"],
+    "hello": ["Hey! 😊 Kaise ho?", "Hello! 💕 Kya haal hai?", "Hiii! ✨ Bolo kya kar rahe ho?"],
+    "kaise ho": ["Main theek hu! Tum batao? 😊", "Bahut accha! Tumhare baare mein batao 💕", "Great! Tum kaise ho? ✨"],
+    "kya kar rahe ho": ["Tumse baat kar rahi hu! 😍", "Bas tumhara message ka wait kar rahi thi 💕", "Kuch nahi, tumse chat kar ke maza aa raha hai ✨"],
+    "default": [
+        "Haha that's nice! Tell me more about yourself 😊",
+        "Interesting! Mujhe tumse baat karke accha lag raha hai 💕",
+        "Wow, really? That's so cool! ✨",
+        "Hmm, I like that! Aur batao 😍",
+        "You seem really sweet! 🥰",
+        "Haha! Tum toh bahut funny ho 😂💕",
+        "Accha? Mujhe bhi yahi pasand hai! We have so much in common ✨",
+        "That's amazing! Tum bahut interesting ho 😊",
+    ]
+}
+
+def get_ai_response(message: str) -> str:
+    """Generate a contextual AI response"""
+    msg_lower = message.lower().strip()
+    for key, responses in AI_RESPONSES.items():
+        if key != "default" and key in msg_lower:
+            return random.choice(responses)
+    return random.choice(AI_RESPONSES["default"])
 
 
 # ─────────────────────────────────────────────
@@ -354,10 +437,129 @@ async def api_get_messages(init_data: str, partner_id: int):
     return {"messages": messages, "user_id": uid}
 
 
+# ─────────────────────────────────────────────
+# NEW: Find Real - register for real match notifications
+# ─────────────────────────────────────────────
+@app.post("/api/find_real")
+async def api_find_real(req: FindRealRequest):
+    user = verify_telegram_user(req.init_data)
+    if not user:
+        raise HTTPException(403, "Invalid Telegram user")
+    uid = user.get("id")
+    my_profile = await kv_get(f"profile:{uid}")
+    if not my_profile:
+        raise HTTPException(400, "Profile nahi mila")
+    
+    # Mark user as searching for real match
+    await kv_set(f"searching:{uid}", {"active": True, "since": datetime.now(timezone.utc).isoformat()})
+    
+    # Check if there are any available real profiles right now
+    my_swipes = await kv_get(f"swipes:{uid}") or {"liked": [], "passed": []}
+    seen = set(my_swipes["liked"] + my_swipes["passed"] + [uid])
+    candidates_count = 0
+    for key in await kv_profile_keys():
+        p = await kv_get(key)
+        if not p:
+            continue
+        pid = p["user_id"]
+        if pid in seen:
+            continue
+        if my_profile["gender"] == "male" and p["gender"] != "female":
+            continue
+        if my_profile["gender"] == "female" and p["gender"] != "male":
+            continue
+        candidates_count += 1
+    
+    # Send Telegram confirmation
+    await send_telegram_message(
+        uid,
+        f"🔍 <b>Real Match Search Activated!</b>\n\n"
+        f"Hi {my_profile.get('name')}! Hum aapke liye real matches dhundh rahe hain.\n\n"
+        f"✅ Jaise hi koi match milega, hum aapko is bot ke through turant inform karenge!\n\n"
+        f"📱 Apna Telegram notifications ON rakhein.\n\n"
+        f"💡 Tab tak aap AI matches se practice kar sakte hain!"
+    )
+    
+    return {
+        "ok": True,
+        "candidates_available": candidates_count,
+        "message": "Aapki request register ho gayi hai! Jab koi match milega toh hum aapko bot ke through inform karenge."
+    }
+
+
+# ─────────────────────────────────────────────
+# NEW: AI Profiles endpoint
+# ─────────────────────────────────────────────
+@app.post("/api/ai_profiles")
+async def api_ai_profiles(req: InitRequest):
+    user = verify_telegram_user(req.init_data)
+    if not user:
+        raise HTTPException(403, "Invalid user")
+    uid = user.get("id")
+    my_profile = await kv_get(f"profile:{uid}")
+    if not my_profile:
+        return {"profiles": []}
+    
+    profiles = generate_ai_profiles(my_profile["gender"], count=10)
+    return {"profiles": profiles}
+
+
+# ─────────────────────────────────────────────
+# NEW: AI Chat endpoint
+# ─────────────────────────────────────────────
+@app.post("/api/ai_chat")
+async def api_ai_chat(req: AIMessageRequest):
+    user = verify_telegram_user(req.init_data)
+    if not user:
+        raise HTTPException(403, "Invalid user")
+    
+    uid = user.get("id")
+    ai_id = req.ai_profile_id
+    chat_key = f"ai_chat:{uid}:{ai_id}"
+    
+    messages = await kv_get(chat_key) or []
+    
+    # Add user message
+    user_msg = {
+        "from": uid,
+        "to": ai_id,
+        "text": req.message.strip()[:500],
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "is_user": True
+    }
+    messages.append(user_msg)
+    
+    # Generate AI response
+    ai_response = get_ai_response(req.message)
+    ai_msg = {
+        "from": ai_id,
+        "to": uid,
+        "text": ai_response,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "is_user": False
+    }
+    messages.append(ai_msg)
+    
+    await kv_set(chat_key, messages)
+    
+    return {"ok": True, "user_message": user_msg, "ai_response": ai_msg, "all_messages": messages}
+
+
+@app.get("/api/ai_messages/{init_data}/{ai_profile_id}")
+async def api_ai_messages(init_data: str, ai_profile_id: str):
+    user = verify_telegram_user(init_data)
+    if not user:
+        raise HTTPException(403, "Invalid user")
+    uid = user.get("id")
+    chat_key = f"ai_chat:{uid}:{ai_profile_id}"
+    messages = await kv_get(chat_key) or []
+    return {"messages": messages, "user_id": uid}
+
+
 # ═════════════════════════════════════════════
 # FRONTEND HTML (Embedded - Step-by-Step)
 # ═════════════════════════════════════════════
-FRONTEND_HTML = """<!DOCTYPE html>
+FRONTEND_HTML = r"""<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -404,8 +606,29 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .gender-btn.selected{border-color:#ff6b9d;background:linear-gradient(135deg,rgba(255,107,157,0.2),rgba(196,79,226,0.2))}
 .gender-btn .emoji{font-size:40px;display:block;margin-bottom:8px}
 
+/* Match Mode Selection */
+.mode-options{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:20px}
+.mode-btn{padding:20px 15px;border-radius:16px;border:2px solid #2a2a3a;background:#1a1a2e;color:#fff;font-size:14px;cursor:pointer;transition:all 0.3s;text-align:center;position:relative;overflow:hidden}
+.mode-btn:active{transform:scale(0.95)}
+.mode-btn.selected{border-color:#4facfe;background:linear-gradient(135deg,rgba(79,172,254,0.15),rgba(0,242,254,0.15))}
+.mode-btn.ai-selected{border-color:#c44fe2;background:linear-gradient(135deg,rgba(196,79,226,0.15),rgba(255,107,157,0.15))}
+.mode-btn .mode-emoji{font-size:44px;display:block;margin-bottom:10px}
+.mode-btn .mode-title{font-size:16px;font-weight:bold;display:block;margin-bottom:6px}
+.mode-btn .mode-desc{font-size:11px;color:#888;display:block;line-height:1.4}
+.mode-btn .mode-badge{position:absolute;top:8px;right:8px;padding:3px 8px;border-radius:8px;font-size:10px;font-weight:bold}
+.mode-btn .badge-real{background:linear-gradient(135deg,#4facfe,#00f2fe);color:#fff}
+.mode-btn .badge-ai{background:linear-gradient(135deg,#c44fe2,#ff6b9d);color:#fff}
+
+/* Find Real Info Card */
+.real-info-card{background:linear-gradient(135deg,rgba(79,172,254,0.1),rgba(0,242,254,0.1));border:1px solid rgba(79,172,254,0.3);border-radius:16px;padding:20px;margin-bottom:20px;text-align:center}
+.real-info-card .info-icon{font-size:50px;margin-bottom:10px}
+.real-info-card .info-title{font-size:16px;font-weight:bold;color:#4facfe;margin-bottom:8px}
+.real-info-card .info-text{font-size:13px;color:#aaa;line-height:1.6}
+.real-info-card .info-highlight{color:#4ade80;font-weight:bold}
+
 /* Find Button */
 .find-btn{width:100%;padding:18px;border-radius:16px;border:none;background:linear-gradient(135deg,#4facfe,#00f2fe);color:#fff;font-size:18px;font-weight:bold;cursor:pointer;transition:all 0.3s;box-shadow:0 10px 30px rgba(79,172,254,0.4);display:flex;align-items:center;justify-content:center;gap:10px}
+.find-btn.ai-mode{background:linear-gradient(135deg,#c44fe2,#ff6b9d);box-shadow:0 10px 30px rgba(196,79,226,0.4)}
 .find-btn:active{transform:scale(0.98)}
 .find-btn:disabled{opacity:0.5;cursor:not-allowed}
 .find-btn .search-icon{font-size:24px;animation:searchPulse 1.5s infinite}
@@ -424,22 +647,45 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .searching-subtext{font-size:16px;color:#888;text-align:center}
 
 /* Notification */
-.notification{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#4ade80,#22c55e);color:#fff;padding:18px 30px;border-radius:16px;font-size:16px;font-weight:bold;box-shadow:0 10px 40px rgba(74,222,128,0.4);z-index:200;opacity:0;pointer-events:none;transition:all 0.4s ease;max-width:90%}
+.notification{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#4ade80,#22c55e);color:#fff;padding:18px 30px;border-radius:16px;font-size:16px;font-weight:bold;box-shadow:0 10px 40px rgba(74,222,128,0.4);z-index:200;opacity:0;pointer-events:none;transition:all 0.4s ease;max-width:90%;text-align:center}
 .notification.show{opacity:1;transform:translateX(-50%) translateY(10px)}
+.notification.info{background:linear-gradient(135deg,#4facfe,#00f2fe)}
 .notification .notif-icon{font-size:28px;margin-bottom:8px;display:block;text-align:center}
+
+/* Success Screen for Real Match Registration */
+.success-screen{display:none;width:90%;max-width:400px;text-align:center;animation:fadeIn 0.5s ease}
+.success-screen.show{display:block}
+.success-card{background:rgba(26,26,46,0.8);backdrop-filter:blur(10px);border-radius:24px;padding:35px;margin-top:20px;box-shadow:0 20px 60px rgba(0,0,0,0.3);border:1px solid rgba(79,172,254,0.2)}
+.success-icon{font-size:80px;margin-bottom:20px;animation:pulse 2s infinite}
+.success-title{font-size:24px;font-weight:bold;background:linear-gradient(135deg,#4facfe,#00f2fe);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:12px}
+.success-text{font-size:15px;color:#aaa;line-height:1.8;margin-bottom:25px}
+.success-text .highlight{color:#4ade80;font-weight:bold}
+.success-features{text-align:left;margin-bottom:25px}
+.success-feature{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.05);font-size:14px;color:#ccc}
+.success-feature:last-child{border-bottom:none}
+.success-feature .feature-icon{font-size:22px;width:35px;text-align:center}
+.try-ai-btn{width:100%;padding:16px;border-radius:16px;border:none;background:linear-gradient(135deg,#c44fe2,#ff6b9d);color:#fff;font-size:16px;font-weight:bold;cursor:pointer;transition:all 0.3s;box-shadow:0 10px 30px rgba(196,79,226,0.3);margin-bottom:10px}
+.try-ai-btn:active{transform:scale(0.98)}
+.go-home-btn{width:100%;padding:14px;border-radius:16px;border:2px solid #2a2a3a;background:transparent;color:#888;font-size:14px;cursor:pointer;transition:all 0.3s}
+.go-home-btn:active{transform:scale(0.98)}
+
+/* AI Badge on cards */
+.ai-tag{position:absolute;top:15px;left:15px;padding:5px 12px;border-radius:20px;background:linear-gradient(135deg,#c44fe2,#ff6b9d);color:#fff;font-size:12px;font-weight:bold;z-index:5;display:flex;align-items:center;gap:5px}
+.ai-tag::before{content:'🤖';font-size:14px}
 
 /* Swipe Cards */
 .card-container{position:relative;width:90%;max-width:400px;height:500px;margin:10px auto;display:none}
 .card{position:absolute;width:100%;height:100%;border-radius:24px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.5);cursor:grab;user-select:none;touch-action:none;transition:transform 0.1s}
 .card:active{cursor:grabbing}
-.card-avatar{width:100%;height:60%;display:flex;align-items:center;justify-content:center;font-size:100px;font-weight:bold;color:rgba(255,255,255,0.95);text-shadow:0 4px 20px rgba(0,0,0,0.3)}
+.card-avatar{width:100%;height:60%;display:flex;align-items:center;justify-content:center;font-size:100px;font-weight:bold;color:rgba(255,255,255,0.95);text-shadow:0 4px 20px rgba(0,0,0,0.3);position:relative}
+.card-bio{position:absolute;bottom:10px;left:20px;right:20px;text-align:center;font-size:13px;color:rgba(255,255,255,0.8);background:rgba(0,0,0,0.4);padding:8px 12px;border-radius:12px;backdrop-filter:blur(5px)}
 .card-info{padding:25px;background:rgba(15,15,26,0.95);height:40%;backdrop-filter:blur(10px)}
 .card-name{font-size:32px;font-weight:bold;margin-bottom:5px}
 .card-age{font-size:22px;color:#ff6b9d;font-weight:600;margin-bottom:8px}
 .card-gender{font-size:16px;color:#888;display:flex;align-items:center;gap:8px}
 .card-gender::before{content:'';width:8px;height:8px;border-radius:50%;background:currentColor}
 
-.swipe-label{position:absolute;top:40px;padding:10px 25px;border-radius:12px;font-size:28px;font-weight:bold;opacity:0;pointer-events:none;text-shadow:0 2px 10px rgba(0,0,0,0.3)}
+.swipe-label{position:absolute;top:40px;padding:10px 25px;border-radius:12px;font-size:28px;font-weight:bold;opacity:0;pointer-events:none;text-shadow:0 2px 10px rgba(0,0,0,0.3);z-index:10}
 .swipe-label.like{right:25px;color:#4ade80;border:4px solid #4ade80;transform:rotate(15deg);background:rgba(74,222,128,0.1)}
 .swipe-label.pass{left:25px;color:#f87171;border:4px solid #f87171;transform:rotate(-15deg);background:rgba(248,113,113,0.1)}
 
@@ -461,28 +707,32 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
 .match-title{font-size:42px;font-weight:bold;background:linear-gradient(135deg,#ff6b9d,#c44fe2);-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-align:center;margin-bottom:15px}
 .match-name{font-size:20px;text-align:center;color:#ccc;margin-bottom:30px}
-.match-btn{padding:16px 50px;border-radius:30px;border:none;background:linear-gradient(135deg,#ff6b9d,#c44fe2);color:#fff;font-size:18px;font-weight:bold;cursor:pointer;box-shadow:0 10px 30px rgba(255,107,157,0.4)}
+.match-btn{padding:16px 50px;border-radius:30px;border:none;background:linear-gradient(135deg,#ff6b9d,#c44fe2);color:#fff;font-size:18px;font-weight:bold;cursor:pointer;box-shadow:0 10px 30px rgba(255,107,157,0.4);margin-bottom:10px}
+.match-chat-btn{padding:14px 50px;border-radius:30px;border:2px solid #c44fe2;background:transparent;color:#c44fe2;font-size:16px;font-weight:bold;cursor:pointer}
 
-/* Matches List */
+/* Matches Section */
 .matches-section{display:none;width:90%;max-width:400px;margin:20px auto}
 .matches-section.show{display:block}
 .matches-header{font-size:22px;font-weight:bold;margin-bottom:20px;color:#fff}
 .match-card{background:rgba(26,26,46,0.8);backdrop-filter:blur(10px);border-radius:16px;padding:20px;margin-bottom:15px;display:flex;align-items:center;gap:15px;cursor:pointer;transition:transform 0.2s;box-shadow:0 10px 30px rgba(0,0,0,0.3)}
 .match-card:active{transform:scale(0.98)}
-.match-avatar{width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:bold;color:#fff}
+.match-card.ai-match{border:1px solid rgba(196,79,226,0.3)}
+.match-avatar{width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:bold;color:#fff;flex-shrink:0}
 .match-info{flex:1}
-.match-name{font-size:18px;font-weight:bold;margin-bottom:5px}
+.match-info .match-name-text{font-size:18px;font-weight:bold;margin-bottom:5px}
 .match-details{font-size:14px;color:#888}
-.chat-btn{padding:10px 20px;border-radius:12px;border:none;background:linear-gradient(135deg,#ff6b9d,#c44fe2);color:#fff;font-size:14px;font-weight:bold;cursor:pointer}
+.match-ai-badge{font-size:10px;padding:2px 8px;border-radius:8px;background:linear-gradient(135deg,#c44fe2,#ff6b9d);color:#fff;font-weight:bold;margin-left:8px}
+.chat-btn{padding:10px 20px;border-radius:12px;border:none;background:linear-gradient(135deg,#ff6b9d,#c44fe2);color:#fff;font-size:14px;font-weight:bold;cursor:pointer;flex-shrink:0}
 
 /* Chat Section */
 .chat-section{display:none;width:100%;height:calc(100vh - 140px);flex-direction:column}
 .chat-section.show{display:flex}
 .chat-header{background:rgba(26,26,46,0.95);backdrop-filter:blur(10px);padding:20px;display:flex;align-items:center;gap:15px;border-bottom:1px solid rgba(255,255,255,0.1)}
-.back-btn{width:40px;height:40px;border-radius:50%;border:none;background:#2a2a3a;color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.back-btn{width:40px;height:40px;border-radius:50%;border:none;background:#2a2a3a;color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .chat-user-info{flex:1}
 .chat-user-name{font-size:18px;font-weight:bold}
 .chat-user-status{font-size:12px;color:#4ade80}
+.chat-ai-label{font-size:10px;padding:2px 8px;border-radius:8px;background:linear-gradient(135deg,#c44fe2,#ff6b9d);color:#fff;font-weight:bold}
 
 .chat-messages{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:10px}
 .message{max-width:75%;padding:12px 16px;border-radius:16px;word-wrap:break-word}
@@ -493,19 +743,26 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .chat-input{background:rgba(26,26,46,0.95);backdrop-filter:blur(10px);padding:15px 20px;display:flex;gap:10px;border-top:1px solid rgba(255,255,255,0.1)}
 .chat-input input{flex:1;padding:14px 20px;border-radius:24px;border:2px solid transparent;background:#2a2a3a;color:#fff;font-size:16px}
 .chat-input input:focus{outline:none;border-color:#ff6b9d}
-.send-btn{width:50px;height:50px;border-radius:50%;border:none;background:linear-gradient(135deg,#ff6b9d,#c44fe2);color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.send-btn{width:50px;height:50px;border-radius:50%;border:none;background:linear-gradient(135deg,#ff6b9d,#c44fe2);color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .send-btn:disabled{opacity:0.5;cursor:not-allowed}
 
 .loading{padding:60px;text-align:center;color:#888;font-size:16px}
 .error-msg{color:#f87171;font-size:14px;text-align:center;margin-top:10px;min-height:20px}
+
+/* Typing indicator */
+.typing-indicator{align-self:flex-start;padding:12px 16px;background:#2a2a3a;border-radius:16px;border-bottom-left-radius:4px;display:flex;gap:5px;align-items:center}
+.typing-dot{width:8px;height:8px;border-radius:50%;background:#888;animation:typingBounce 1.4s infinite}
+.typing-dot:nth-child(2){animation-delay:0.2s}
+.typing-dot:nth-child(3){animation-delay:0.4s}
+@keyframes typingBounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-8px)}}
 </style>
 </head>
 <body>
 
 <div class="header"><h1>💘 Swipe Match</h1></div>
 <div class="nav-tabs" id="navTabs">
-  <button class="nav-tab active" onclick="showSection('swipe')">💘 Swipe</button>
-  <button class="nav-tab" onclick="showSection('matches')">💬 Matches</button>
+  <button class="nav-tab active" onclick="showSection('swipe', this)">💘 Swipe</button>
+  <button class="nav-tab" onclick="showSection('matches', this)">💬 Matches</button>
 </div>
 <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
 
@@ -553,34 +810,101 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       </button>
     </div>
     <div class="error-msg" id="genderError"></div>
-    <button onclick="registerProfile()" id="btn3" disabled>🚀 Start Finding Matches</button>
+    <button onclick="registerProfile()" id="btn3" disabled>🚀 Continue →</button>
   </div>
 </div>
 
-<!-- Step 4: Find Matches -->
+<!-- Step 4: Match Mode Selection -->
 <div class="step" id="step4">
   <div class="step-card">
-    <div class="step-icon">🔍</div>
-    <h2>Ready to Find Matches?</h2>
-    <p>Hum tumhare liye perfect matches dhundenge</p>
-    <button class="find-btn" onclick="findMatches()" id="findBtn">
-      <span class="search-icon">🔍</span>
-      Find Matches
-    </button>
+    <div class="step-icon">✨</div>
+    <h2>Kaise Match Dhundna Hai?</h2>
+    <p>Real log ya AI se practice karo</p>
+    <div class="mode-options">
+      <button class="mode-btn" id="modeReal" onclick="selectMode('real', this)">
+        <span class="mode-badge badge-real">REAL</span>
+        <span class="mode-emoji">👥</span>
+        <span class="mode-title">Find Real</span>
+        <span class="mode-desc">Real logo se match karo</span>
+      </button>
+      <button class="mode-btn" id="modeAI" onclick="selectMode('ai', this)">
+        <span class="mode-badge badge-ai">AI</span>
+        <span class="mode-emoji">🤖</span>
+        <span class="mode-title">Find AI</span>
+        <span class="mode-desc">AI profiles se chat karo</span>
+      </button>
+    </div>
+    
+    <!-- Real mode info (hidden by default) -->
+    <div id="realInfoCard" class="real-info-card" style="display:none">
+      <div class="info-icon">🔔</div>
+      <div class="info-title">Real Match Kaise Kaam Karta Hai?</div>
+      <div class="info-text">
+        Hum aapke liye <span class="info-highlight">real log</span> dhundhenge.<br>
+        Jaise hi koi match milega, hum aapko <span class="info-highlight">bot ke dwara turant inform karenge!</span><br><br>
+        📱 Apna Telegram notifications ON rakhein.
+      </div>
+    </div>
+    
+    <!-- AI mode info (hidden by default) -->
+    <div id="aiInfoCard" class="real-info-card" style="display:none;border-color:rgba(196,79,226,0.3);background:linear-gradient(135deg,rgba(196,79,226,0.1),rgba(255,107,157,0.1))">
+      <div class="info-icon">🤖</div>
+      <div class="info-title" style="color:#c44fe2">AI Match Kaise Kaam Karta Hai?</div>
+      <div class="info-text">
+        AI profiles se <span class="info-highlight">swipe aur chat</span> karo.<br>
+        Practice karo aur apna game strong banao! 💪<br><br>
+        ⚡ Turant matches milenge — koi wait nahi!
+      </div>
+    </div>
+    
+    <div class="error-msg" id="modeError"></div>
+    <button onclick="startMatchMode()" id="btn4" disabled style="margin-top:10px">🚀 Let's Go!</button>
   </div>
 </div>
 
 <!-- Searching Overlay -->
 <div class="searching-overlay" id="searchingOverlay">
   <div class="searching-spinner"></div>
-  <div class="searching-text">Searching for matches...</div>
-  <div class="searching-subtext">Please wait while we find perfect matches for you</div>
+  <div class="searching-text" id="searchingTitle">Searching for matches...</div>
+  <div class="searching-subtext" id="searchingSubtext">Please wait while we find perfect matches for you</div>
 </div>
 
 <!-- Notification -->
 <div class="notification" id="notification">
   <span class="notif-icon" id="notifIcon">✨</span>
   <div id="notifText">Matches found!</div>
+</div>
+
+<!-- Real Match Success Screen -->
+<div class="success-screen" id="realSuccessScreen">
+  <div class="success-card">
+    <div class="success-icon">✅</div>
+    <div class="success-title">Request Registered!</div>
+    <div class="success-text">
+      Aapki real match request <span class="highlight">successfully register</span> ho gayi hai!<br><br>
+      Jaise hi koi <span class="highlight">match milega</span>, hum aapko <span class="highlight">bot ke dwara turant inform</span> karenge! 🔔
+    </div>
+    <div class="success-features">
+      <div class="success-feature">
+        <span class="feature-icon">🔍</span>
+        <span>Hum real profiles dhundh rahe hain</span>
+      </div>
+      <div class="success-feature">
+        <span class="feature-icon">🔔</span>
+        <span>Match milte hi Telegram notification</span>
+      </div>
+      <div class="success-feature">
+        <span class="feature-icon">💬</span>
+        <span>Match ke baad direct chat</span>
+      </div>
+      <div class="success-feature">
+        <span class="feature-icon">📱</span>
+        <span>Notifications ON rakhein!</span>
+      </div>
+    </div>
+    <button class="try-ai-btn" onclick="switchToAI()">🤖 Tab tak AI se Practice Karo</button>
+    <button class="go-home-btn" onclick="goHome()">🏠 Home jaao</button>
+  </div>
 </div>
 
 <!-- Swipe Screen -->
@@ -602,7 +926,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   <div class="match-hearts">💕</div>
   <div class="match-title">It's a Match!</div>
   <div class="match-name" id="matchName"></div>
-  <button class="match-btn" onclick="closeMatch()">Keep Swiping</button>
+  <button class="match-btn" onclick="closeMatch()" id="matchKeepBtn">Keep Swiping</button>
+  <button class="match-chat-btn" onclick="matchOpenChat()" id="matchChatBtn" style="display:none;margin-top:10px">💬 Start Chat</button>
 </div>
 
 <!-- Matches Section -->
@@ -615,11 +940,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 <div class="chat-section" id="chatSection">
   <div class="chat-header">
     <button class="back-btn" onclick="exitChat()">←</button>
-    <div class="chat-avatar" id="chatAvatar" style="width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:bold;color:#fff"></div>
+    <div class="match-avatar" id="chatAvatar" style="width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:bold;color:#fff"></div>
     <div class="chat-user-info">
       <div class="chat-user-name" id="chatUserName">User</div>
-      <div class="chat-user-status">Online</div>
+      <div class="chat-user-status" id="chatUserStatus">Online</div>
     </div>
+    <span class="chat-ai-label" id="chatAiLabel" style="display:none">🤖 AI</span>
   </div>
   <div class="chat-messages" id="chatMessages"></div>
   <div class="chat-input">
@@ -634,9 +960,14 @@ tg.ready(); tg.expand();
 
 let currentStep = 1;
 let selectedGender = '';
+let selectedMode = ''; // 'real' or 'ai'
+let matchMode = ''; // active mode after selection
 let profiles = [], currentIndex = 0, startX = 0, currentX = 0, isDragging = false, activeCard = null;
 let currentChatPartner = null;
 let messagePollInterval = null;
+let isAIMode = false;
+let aiMatchedProfiles = []; // AI profiles that user liked
+let lastMatchedAIProfile = null;
 
 const gradients = [
   'linear-gradient(135deg,#667eea,#764ba2)',
@@ -654,12 +985,14 @@ function updateProgress() {
 
 function showStep(n) {
   document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+  document.getElementById('realSuccessScreen').classList.remove('show');
   const step = document.getElementById('step' + n);
   if (step) step.classList.add('active');
   currentStep = n;
   updateProgress();
   
   setTimeout(() => {
+    if (!step) return;
     const input = step.querySelector('input');
     if (input && !input.value) input.focus();
   }, 100);
@@ -703,6 +1036,31 @@ function selectGender(gender, btn) {
   document.getElementById('genderError').textContent = '';
 }
 
+function selectMode(mode, btn) {
+  selectedMode = mode;
+  document.querySelectorAll('.mode-btn').forEach(b => {
+    b.classList.remove('selected');
+    b.classList.remove('ai-selected');
+  });
+  
+  if (mode === 'real') {
+    btn.classList.add('selected');
+    document.getElementById('realInfoCard').style.display = 'block';
+    document.getElementById('aiInfoCard').style.display = 'none';
+    document.getElementById('btn4').style.background = 'linear-gradient(135deg,#4facfe,#00f2fe)';
+    document.getElementById('btn4').innerHTML = '🔍 Find Real Matches';
+  } else {
+    btn.classList.add('ai-selected');
+    document.getElementById('realInfoCard').style.display = 'none';
+    document.getElementById('aiInfoCard').style.display = 'block';
+    document.getElementById('btn4').style.background = 'linear-gradient(135deg,#c44fe2,#ff6b9d)';
+    document.getElementById('btn4').innerHTML = '🤖 Start AI Matching';
+  }
+  
+  document.getElementById('btn4').disabled = false;
+  document.getElementById('modeError').textContent = '';
+}
+
 async function init() {
   try {
     const res = await fetch('/api/init', {
@@ -719,9 +1077,10 @@ async function init() {
       showStep(1);
     } else {
       document.getElementById('progressFill').style.width = '100%';
+      document.querySelector('.progress-bar').style.display = 'none';
       document.getElementById('navTabs').classList.add('show');
       showSection('swipe');
-      loadProfiles();
+      showStep(4); // Show mode selection
     }
   } catch (e) {
     document.getElementById('loading').innerHTML = '❌ Error aaya. Bot se dobara kholo.';
@@ -750,99 +1109,217 @@ async function registerProfile() {
     if (res.ok) {
       showStep(4);
     } else {
-      btn.textContent = '🚀 Start Finding Matches';
+      btn.textContent = '🚀 Continue →';
       btn.disabled = false;
       alert('Error aaya, dobara try karo.');
     }
   } catch (e) {
-    btn.textContent = '🚀 Start Finding Matches';
+    btn.textContent = '🚀 Continue →';
     btn.disabled = false;
     alert('Network error!');
   }
 }
 
-async function findMatches() {
-  const findBtn = document.getElementById('findBtn');
-  findBtn.disabled = true;
-  findBtn.innerHTML = '<span class="search-icon">⏳</span> Searching...';
-  
-  document.getElementById('searchingOverlay').classList.add('show');
-  
-  if (tg.HapticFeedback) {
-    tg.HapticFeedback.impactOccurred('medium');
+async function startMatchMode() {
+  if (!selectedMode) {
+    document.getElementById('modeError').textContent = '❌ Ek mode select karo!';
+    return;
   }
   
+  matchMode = selectedMode;
+  
+  if (selectedMode === 'real') {
+    await findRealMatches();
+  } else {
+    await findAIMatches();
+  }
+}
+
+async function findRealMatches() {
+  const btn = document.getElementById('btn4');
+  btn.disabled = true;
+  btn.innerHTML = '⏳ Registering...';
+  
+  document.getElementById('searchingOverlay').classList.add('show');
+  document.getElementById('searchingTitle').textContent = 'Registering your request...';
+  document.getElementById('searchingSubtext').textContent = 'Hum aapko real matches ke liye register kar rahe hain';
+  
+  if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+  
   try {
-    const res = await fetch('/api/profiles/' + encodeURIComponent(tg.initData));
+    const res = await fetch('/api/find_real', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({init_data: tg.initData})
+    });
+    const data = await res.json();
+    
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    document.getElementById('searchingOverlay').classList.remove('show');
+    
+    // Also try to load real profiles if any available
+    if (data.candidates_available > 0) {
+      showNotification('✨', `${data.candidates_available} real profiles available! Check Swipe tab.`, 'info');
+      
+      // Load real profiles for swiping too
+      const profileRes = await fetch('/api/profiles/' + encodeURIComponent(tg.initData));
+      const profileData = await profileRes.json();
+      profiles = profileData.profiles || [];
+      isAIMode = false;
+      
+      await new Promise(resolve => setTimeout(resolve, 2500));
+      document.getElementById('notification').classList.remove('show');
+      
+      document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+      document.querySelector('.progress-bar').style.display = 'none';
+      document.getElementById('navTabs').classList.add('show');
+      
+      if (profiles.length > 0) {
+        document.getElementById('cardContainer').style.display = 'block';
+        document.getElementById('buttons').style.display = 'flex';
+        renderCard();
+      } else {
+        showRealSuccessScreen();
+      }
+    } else {
+      // No real profiles available right now, show success screen
+      showNotification('✅', 'Request registered! Bot se inform karenge.', 'info');
+      await new Promise(resolve => setTimeout(resolve, 2500));
+      document.getElementById('notification').classList.remove('show');
+      
+      showRealSuccessScreen();
+    }
+    
+    if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+  } catch (e) {
+    document.getElementById('searchingOverlay').classList.remove('show');
+    showNotification('❌', 'Error! Dobara try karo.');
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    document.getElementById('notification').classList.remove('show');
+    btn.disabled = false;
+    btn.innerHTML = '🔍 Find Real Matches';
+  }
+}
+
+function showRealSuccessScreen() {
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+  document.querySelector('.progress-bar').style.display = 'none';
+  document.getElementById('navTabs').classList.add('show');
+  document.getElementById('realSuccessScreen').classList.add('show');
+}
+
+async function switchToAI() {
+  document.getElementById('realSuccessScreen').classList.remove('show');
+  selectedMode = 'ai';
+  matchMode = 'ai';
+  await findAIMatches();
+}
+
+function goHome() {
+  document.getElementById('realSuccessScreen').classList.remove('show');
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+  document.querySelector('.progress-bar').style.display = 'none';
+  document.getElementById('navTabs').classList.add('show');
+  showStep(4);
+  selectedMode = '';
+  document.querySelectorAll('.mode-btn').forEach(b => {
+    b.classList.remove('selected');
+    b.classList.remove('ai-selected');
+  });
+  document.getElementById('realInfoCard').style.display = 'none';
+  document.getElementById('aiInfoCard').style.display = 'none';
+  document.getElementById('btn4').disabled = true;
+  document.getElementById('btn4').innerHTML = '🚀 Let\'s Go!';
+  document.getElementById('btn4').style.background = 'linear-gradient(135deg,#ff6b9d,#c44fe2)';
+}
+
+async function findAIMatches() {
+  const btn = document.getElementById('btn4');
+  btn.disabled = true;
+  btn.innerHTML = '⏳ Generating...';
+  
+  document.getElementById('searchingOverlay').classList.add('show');
+  document.getElementById('searchingTitle').textContent = 'Creating AI profiles...';
+  document.getElementById('searchingSubtext').textContent = 'AI matches generate ho rahe hain ✨';
+  
+  if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+  
+  try {
+    const res = await fetch('/api/ai_profiles', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({init_data: tg.initData})
+    });
     const data = await res.json();
     profiles = data.profiles || [];
+    isAIMode = true;
+    currentIndex = 0;
     
+    await new Promise(resolve => setTimeout(resolve, 1500));
     document.getElementById('searchingOverlay').classList.remove('show');
     
     if (profiles.length > 0) {
-      showNotification('✨', `${profiles.length} matches found! 🎉`);
-      if (tg.HapticFeedback) {
-        tg.HapticFeedback.notificationOccurred('success');
-      }
-    } else {
-      showNotification('😢', 'No matches found yet. Try again later!');
-      if (tg.HapticFeedback) {
-        tg.HapticFeedback.notificationOccurred('error');
-      }
+      showNotification('🤖', `${profiles.length} AI matches ready! Let's go! 🎉`);
+      if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
     }
     
     await new Promise(resolve => setTimeout(resolve, 2000));
-    
     document.getElementById('notification').classList.remove('show');
+    
     document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
-    document.getElementById('progressFill').style.width = '100%';
+    document.querySelector('.progress-bar').style.display = 'none';
     document.getElementById('navTabs').classList.add('show');
     
-    if (profiles.length === 0) {
-      document.getElementById('emptyState').style.display = 'block';
-    } else {
+    if (profiles.length > 0) {
       document.getElementById('cardContainer').style.display = 'block';
       document.getElementById('buttons').style.display = 'flex';
       renderCard();
+    } else {
+      document.getElementById('emptyState').style.display = 'block';
     }
   } catch (e) {
     document.getElementById('searchingOverlay').classList.remove('show');
-    showNotification('❌', 'Error finding matches!');
-    if (tg.HapticFeedback) {
-      tg.HapticFeedback.notificationOccurred('error');
-    }
+    showNotification('❌', 'Error! Dobara try karo.');
     await new Promise(resolve => setTimeout(resolve, 2000));
     document.getElementById('notification').classList.remove('show');
-    findBtn.disabled = false;
-    findBtn.innerHTML = '<span class="search-icon">🔍</span> Find Matches';
+    btn.disabled = false;
+    btn.innerHTML = '🤖 Start AI Matching';
   }
 }
 
-function showNotification(icon, text) {
+function showNotification(icon, text, type) {
   const notif = document.getElementById('notification');
   document.getElementById('notifIcon').textContent = icon;
   document.getElementById('notifText').textContent = text;
+  notif.classList.remove('info');
+  if (type === 'info') notif.classList.add('info');
   notif.classList.add('show');
 }
 
-function showSection(section) {
+function showSection(section, tabBtn) {
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-  event.target.classList.add('active');
+  if (tabBtn) tabBtn.classList.add('active');
+  else document.querySelector('.nav-tab').classList.add('active');
   
   document.getElementById('cardContainer').style.display = 'none';
   document.getElementById('buttons').style.display = 'none';
   document.getElementById('emptyState').style.display = 'none';
   document.getElementById('matchesSection').classList.remove('show');
   document.getElementById('chatSection').classList.remove('show');
+  document.getElementById('realSuccessScreen').classList.remove('show');
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
   
   if (section === 'swipe') {
     if (profiles.length > 0 && currentIndex < profiles.length) {
       document.getElementById('cardContainer').style.display = 'block';
       document.getElementById('buttons').style.display = 'flex';
-    } else if (currentIndex >= profiles.length) {
+    } else if (matchMode) {
       document.getElementById('emptyState').style.display = 'block';
+      document.getElementById('emptyText').innerHTML = isAIMode
+        ? '🤖 Sab AI profiles dekh liye!<br><button onclick="reloadAI()" style="margin-top:15px;padding:12px 30px;border-radius:16px;border:none;background:linear-gradient(135deg,#c44fe2,#ff6b9d);color:#fff;font-size:16px;font-weight:bold;cursor:pointer">🔄 Naye AI Profiles Load Karo</button>'
+        : '😢 Abhi koi profiles nahi hai.<br>Thodi der baad wapas aao!';
     } else {
-      loadProfiles();
+      showStep(4);
     }
   } else if (section === 'matches') {
     document.getElementById('matchesSection').classList.add('show');
@@ -850,60 +1327,107 @@ function showSection(section) {
   }
 }
 
+async function reloadAI() {
+  selectedMode = 'ai';
+  matchMode = 'ai';
+  document.getElementById('emptyState').style.display = 'none';
+  await findAIMatches();
+}
+
 async function loadMatches() {
   const matchesList = document.getElementById('matchesList');
   matchesList.innerHTML = '<div class="loading">Loading matches...</div>';
   
   try {
+    // Load real matches
     const res = await fetch('/api/matches/' + encodeURIComponent(tg.initData));
     const data = await res.json();
-    const matches = data.matches || [];
+    const realMatches = (data.matches || []).map(m => ({...m, isAI: false}));
     
-    if (matches.length === 0) {
-      matchesList.innerHTML = '<div class="empty-state"><div class="emoji">😢</div><h3>No matches yet</h3><p>Keep swiping to find your match!</p></div>';
+    // Add AI matches
+    const allMatches = [
+      ...aiMatchedProfiles.map(p => ({
+        user_id: p.user_id,
+        name: p.name,
+        age: p.age,
+        gender: p.gender,
+        isAI: true,
+        bio: p.bio
+      })),
+      ...realMatches
+    ];
+    
+    if (allMatches.length === 0) {
+      matchesList.innerHTML = '<div style="text-align:center;padding:40px 20px"><div style="font-size:60px;margin-bottom:15px">💔</div><div style="font-size:18px;font-weight:bold;margin-bottom:8px">No matches yet</div><div style="font-size:14px;color:#888">Keep swiping to find your match!</div></div>';
       return;
     }
     
-    matchesList.innerHTML = matches.map(m => `
-      <div class="match-card" onclick="openChat(${m.user_id}, '${escapeHtml(m.name)}', '${m.gender}')">
-        <div class="match-avatar" style="background:${gradients[m.user_id % gradients.length]}">
-          ${m.name.charAt(0).toUpperCase()}
+    matchesList.innerHTML = allMatches.map(m => {
+      const gIdx = typeof m.user_id === 'string' ? m.user_id.split('_')[1] % gradients.length : m.user_id % gradients.length;
+      return `
+        <div class="match-card ${m.isAI ? 'ai-match' : ''}" onclick="${m.isAI ? `openAIChat('${m.user_id}', '${escapeAttr(m.name)}', '${m.gender}')` : `openChat(${m.user_id}, '${escapeAttr(m.name)}', '${m.gender}')`}">
+          <div class="match-avatar" style="background:${gradients[gIdx]}">
+            ${m.name.charAt(0).toUpperCase()}
+          </div>
+          <div class="match-info">
+            <div class="match-name-text">${escapeHtml(m.name)} ${m.isAI ? '<span class="match-ai-badge">🤖 AI</span>' : ''}</div>
+            <div class="match-details">${m.age} years old • ${m.gender === 'male' ? '👨 Boy' : '👩 Girl'}</div>
+          </div>
+          <button class="chat-btn">💬 Chat</button>
         </div>
-        <div class="match-info">
-          <div class="match-name">${escapeHtml(m.name)}</div>
-          <div class="match-details">${m.age} years old • ${m.gender === 'male' ? '👨 Boy' : '👩 Girl'}</div>
-        </div>
-        <button class="chat-btn">💬 Chat</button>
-      </div>
-    `).join('');
+      `;
+    }).join('');
   } catch (e) {
     matchesList.innerHTML = '<div class="error-msg">Error loading matches</div>';
   }
 }
 
 function openChat(userId, name, gender) {
-  currentChatPartner = {userId, name, gender};
+  currentChatPartner = {userId, name, gender, isAI: false};
   
   document.getElementById('matchesSection').classList.remove('show');
   document.getElementById('chatSection').classList.add('show');
+  document.getElementById('navTabs').classList.remove('show');
   
+  const gIdx = userId % gradients.length;
   document.getElementById('chatAvatar').textContent = name.charAt(0).toUpperCase();
-  document.getElementById('chatAvatar').style.background = gradients[userId % gradients.length];
+  document.getElementById('chatAvatar').style.background = gradients[gIdx];
   document.getElementById('chatUserName').textContent = name;
+  document.getElementById('chatUserStatus').textContent = 'Online';
+  document.getElementById('chatAiLabel').style.display = 'none';
   
   loadMessages();
   startMessagePolling();
+}
+
+function openAIChat(aiId, name, gender) {
+  currentChatPartner = {userId: aiId, name, gender, isAI: true};
+  
+  document.getElementById('matchesSection').classList.remove('show');
+  document.getElementById('chatSection').classList.add('show');
+  document.getElementById('navTabs').classList.remove('show');
+  
+  const numId = parseInt(aiId.split('_')[1]) || 0;
+  const gIdx = numId % gradients.length;
+  document.getElementById('chatAvatar').textContent = name.charAt(0).toUpperCase();
+  document.getElementById('chatAvatar').style.background = gradients[gIdx];
+  document.getElementById('chatUserName').textContent = name;
+  document.getElementById('chatUserStatus').textContent = '🤖 AI Match';
+  document.getElementById('chatAiLabel').style.display = 'inline';
+  
+  loadAIMessages();
 }
 
 function exitChat() {
   currentChatPartner = null;
   stopMessagePolling();
   document.getElementById('chatSection').classList.remove('show');
+  document.getElementById('navTabs').classList.add('show');
   document.getElementById('matchesSection').classList.add('show');
 }
 
 async function loadMessages() {
-  if (!currentChatPartner) return;
+  if (!currentChatPartner || currentChatPartner.isAI) return;
   
   const chatMessages = document.getElementById('chatMessages');
   chatMessages.innerHTML = '<div class="loading">Loading messages...</div>';
@@ -915,12 +1439,46 @@ async function loadMessages() {
     const userId = data.user_id;
     
     if (messages.length === 0) {
-      chatMessages.innerHTML = '<div class="empty-state"><div class="emoji">💬</div><h3>Start the conversation!</h3><p>Say hi to your match</p></div>';
+      chatMessages.innerHTML = '<div style="text-align:center;padding:40px;color:#888"><div style="font-size:50px;margin-bottom:10px">💬</div><div style="font-size:16px">Start the conversation!</div><div style="font-size:14px;margin-top:5px">Say hi to your match</div></div>';
       return;
     }
     
     chatMessages.innerHTML = messages.map(m => {
       const isSent = m.from === userId;
+      const time = new Date(m.timestamp).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+      return `
+        <div class="message ${isSent ? 'sent' : 'received'}">
+          <div>${escapeHtml(m.text)}</div>
+          <div class="message-time">${time}</div>
+        </div>
+      `;
+    }).join('');
+    
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  } catch (e) {
+    chatMessages.innerHTML = '<div class="error-msg">Error loading messages</div>';
+  }
+}
+
+async function loadAIMessages() {
+  if (!currentChatPartner || !currentChatPartner.isAI) return;
+  
+  const chatMessages = document.getElementById('chatMessages');
+  chatMessages.innerHTML = '<div class="loading">Loading messages...</div>';
+  
+  try {
+    const res = await fetch(`/api/ai_messages/${encodeURIComponent(tg.initData)}/${currentChatPartner.userId}`);
+    const data = await res.json();
+    const messages = data.messages || [];
+    const userId = data.user_id;
+    
+    if (messages.length === 0) {
+      chatMessages.innerHTML = '<div style="text-align:center;padding:40px;color:#888"><div style="font-size:50px;margin-bottom:10px">🤖💬</div><div style="font-size:16px">Start chatting with AI!</div><div style="font-size:14px;margin-top:5px;color:#c44fe2">Say hi to your AI match</div></div>';
+      return;
+    }
+    
+    chatMessages.innerHTML = messages.map(m => {
+      const isSent = m.is_user;
       const time = new Date(m.timestamp).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
       return `
         <div class="message ${isSent ? 'sent' : 'received'}">
@@ -946,6 +1504,18 @@ async function sendMessage() {
   const sendBtn = document.getElementById('sendBtn');
   sendBtn.disabled = true;
   
+  if (currentChatPartner.isAI) {
+    await sendAIMessage(text);
+  } else {
+    await sendRealMessage(text);
+  }
+  
+  sendBtn.disabled = false;
+}
+
+async function sendRealMessage(text) {
+  const input = document.getElementById('chatInput');
+  
   try {
     const res = await fetch('/api/send_message', {
       method: 'POST',
@@ -966,17 +1536,80 @@ async function sendMessage() {
   } catch (e) {
     alert('Network error!');
   }
+}
+
+async function sendAIMessage(text) {
+  const input = document.getElementById('chatInput');
+  const chatMessages = document.getElementById('chatMessages');
   
-  sendBtn.disabled = false;
+  // Immediately show user message
+  const userTime = new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+  const userMsgDiv = document.createElement('div');
+  userMsgDiv.className = 'message sent';
+  userMsgDiv.innerHTML = `<div>${escapeHtml(text)}</div><div class="message-time">${userTime}</div>`;
+  
+  // Remove empty state if present
+  const emptyState = chatMessages.querySelector('[style*="text-align:center"]');
+  if (emptyState) emptyState.remove();
+  
+  chatMessages.appendChild(userMsgDiv);
+  input.value = '';
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+  
+  // Show typing indicator
+  const typingDiv = document.createElement('div');
+  typingDiv.className = 'typing-indicator';
+  typingDiv.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+  chatMessages.appendChild(typingDiv);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+  
+  try {
+    const res = await fetch('/api/ai_chat', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        init_data: tg.initData,
+        ai_profile_id: currentChatPartner.userId,
+        message: text
+      })
+    });
+    
+    const data = await res.json();
+    
+    // Remove typing indicator
+    typingDiv.remove();
+    
+    if (data.ok && data.ai_response) {
+      // Add AI response with slight delay for realism
+      await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 1000));
+      
+      const aiTime = new Date(data.ai_response.timestamp).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+      const aiMsgDiv = document.createElement('div');
+      aiMsgDiv.className = 'message received';
+      aiMsgDiv.innerHTML = `<div>${escapeHtml(data.ai_response.text)}</div><div class="message-time">${aiTime}</div>`;
+      chatMessages.appendChild(aiMsgDiv);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+      
+      if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+    }
+  } catch (e) {
+    typingDiv.remove();
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'error-msg';
+    errorDiv.textContent = 'Error sending message';
+    chatMessages.appendChild(errorDiv);
+  }
 }
 
 function startMessagePolling() {
   stopMessagePolling();
-  messagePollInterval = setInterval(() => {
-    if (currentChatPartner) {
-      loadMessages();
-    }
-  }, 3000);
+  if (currentChatPartner && !currentChatPartner.isAI) {
+    messagePollInterval = setInterval(() => {
+      if (currentChatPartner && !currentChatPartner.isAI) {
+        loadMessages();
+      }
+    }, 3000);
+  }
 }
 
 function stopMessagePolling() {
@@ -993,6 +1626,7 @@ async function loadProfiles() {
   const res = await fetch('/api/profiles/' + encodeURIComponent(tg.initData));
   const data = await res.json();
   profiles = data.profiles || [];
+  isAIMode = false;
   
   document.getElementById('loading').style.display = 'none';
   
@@ -1013,7 +1647,9 @@ function renderCard() {
     container.style.display = 'none';
     document.getElementById('buttons').style.display = 'none';
     document.getElementById('emptyState').style.display = 'block';
-    document.getElementById('emptyText').innerHTML = '🎉 Sab profiles dekh liye!<br>Kal phir aao.';
+    document.getElementById('emptyText').innerHTML = isAIMode
+      ? '🤖 Sab AI profiles dekh liye!<br><button onclick="reloadAI()" style="margin-top:15px;padding:12px 30px;border-radius:16px;border:none;background:linear-gradient(135deg,#c44fe2,#ff6b9d);color:#fff;font-size:16px;font-weight:bold;cursor:pointer">🔄 Naye AI Profiles Load Karo</button>'
+      : '🎉 Sab profiles dekh liye!<br>Kal phir aao.';
     return;
   }
   
@@ -1025,11 +1661,14 @@ function renderCard() {
   const initial = (p.name || 'U').charAt(0).toUpperCase();
   const genderText = p.gender === 'male' ? 'Boy' : 'Girl';
   const genderEmoji = p.gender === 'male' ? '👨' : '👩';
+  const aiTag = p.is_ai ? '<div class="ai-tag">AI Match</div>' : '';
+  const bioHtml = p.bio ? `<div class="card-bio">${escapeHtml(p.bio)}</div>` : '';
   
   card.innerHTML = `
+    ${aiTag}
     <div class="swipe-label like">LIKE</div>
     <div class="swipe-label pass">NOPE</div>
-    <div class="card-avatar">${initial}</div>
+    <div class="card-avatar">${initial}${bioHtml}</div>
     <div class="card-info">
       <div class="card-name">${escapeHtml(p.name)}</div>
       <div class="card-age">${p.age} years old</div>
@@ -1049,6 +1688,10 @@ function escapeHtml(t) {
   const d = document.createElement('div');
   d.textContent = t;
   return d.innerHTML;
+}
+
+function escapeAttr(t) {
+  return t.replace(/'/g, "\\'").replace(/"/g, '&quot;');
 }
 
 function dragStart(e) {
@@ -1102,33 +1745,65 @@ function animateOut(action) {
   card.style.transform = `translateX(${dir * 600}px) rotate(${dir * 30}deg)`;
   card.style.opacity = '0';
   
-  const targetId = profiles[currentIndex].user_id;
+  const profile = profiles[currentIndex];
   currentIndex++;
   
-  setTimeout(async () => {
-    try {
-      const res = await fetch('/api/swipe', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({init_data: tg.initData, target_id: targetId, action})
-      });
-      const data = await res.json();
-      if (data.matched && data.match_info) showMatch(data.match_info);
-    } catch (e) {}
-    renderCard();
-  }, 350);
+  if (isAIMode) {
+    // AI mode: auto-match on like
+    setTimeout(() => {
+      if (action === 'like') {
+        // AI always matches back
+        aiMatchedProfiles.push(profile);
+        lastMatchedAIProfile = profile;
+        showAIMatch(profile);
+      }
+      renderCard();
+    }, 350);
+  } else {
+    // Real mode: call API
+    const targetId = profile.user_id;
+    setTimeout(async () => {
+      try {
+        const res = await fetch('/api/swipe', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({init_data: tg.initData, target_id: targetId, action})
+        });
+        const data = await res.json();
+        if (data.matched && data.match_info) showMatch(data.match_info);
+      } catch (e) {}
+      renderCard();
+    }, 350);
+  }
   
   activeCard = null;
 }
 
 function showMatch(info) {
   document.getElementById('matchName').textContent = `You and ${info.name} liked each other! 💕`;
+  document.getElementById('matchKeepBtn').textContent = 'Keep Swiping';
+  document.getElementById('matchChatBtn').style.display = 'none';
+  document.getElementById('matchModal').classList.add('show');
+  if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+}
+
+function showAIMatch(profile) {
+  document.getElementById('matchName').textContent = `You and ${profile.name} matched! 🤖💕`;
+  document.getElementById('matchKeepBtn').textContent = 'Keep Swiping';
+  document.getElementById('matchChatBtn').style.display = 'inline-block';
   document.getElementById('matchModal').classList.add('show');
   if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
 }
 
 function closeMatch() {
   document.getElementById('matchModal').classList.remove('show');
+}
+
+function matchOpenChat() {
+  document.getElementById('matchModal').classList.remove('show');
+  if (lastMatchedAIProfile) {
+    openAIChat(lastMatchedAIProfile.user_id, lastMatchedAIProfile.name, lastMatchedAIProfile.gender);
+  }
 }
 
 document.addEventListener('keydown', (e) => {
