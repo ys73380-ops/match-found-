@@ -43,8 +43,7 @@ _mem: dict[str, Any] = {}
 # ─────────────────────────────────────────────
 # AI DATA POOLS
 # ─────────────────────────────────────────────
-AI_MALE_NAMES = ["Arjun", "Rohan", "Aarav", "Vivaan", "Aditya", "Kabir", "Ishaan", "Reyansh", "Ayaan", "Vihaan", "Dhruv", "Arnav", "Shaurya", "Yash", "Krish", "Siddharth", "Raj", "Dev", "Ansh", "Kartik", "Neil", "Aarush", "Ranveer", "Samar"]
-AI_FEMALE_NAMES = ["Ananya", "Priya", "Isha", "Myra", "Aanya", "Saanvi", "Kiara", "Diya", "Riya", "Tara", "Avni", "Kavya", "Zara", "Nisha", "Meera", "Pooja", "Aisha", "Sneha", "Pihu", "Sara", "Simran", "Rhea", "Mahi", "Navya", "Shruti", "Neha", "Roshni", "Tanya"]
+AI_FEMALE_NAMES = ["Ananya", "Priya", "Isha", "Myra", "Aanya", "Saanvi", "Kiara", "Diya", "Riya", "Tara", "Avni", "Kavya", "Zara", "Nisha", "Meera", "Pooja", "Aisha", "Sneha", "Pihu", "Sara", "Simran", "Rhea", "Mahi", "Navya", "Shruti", "Neha", "Roshni", "Tanya", "Vanya", "Kriti"]
 
 AI_BIOS = [
     "Music lover 🎵 | Coffee addict ☕", "Travel enthusiast ✈️ | Foodie 🍕",
@@ -52,7 +51,7 @@ AI_BIOS = [
     "Bookworm 📚 | Tea lover 🍵", "Dog person 🐕 | Sunset chaser 🌅",
     "Gamer 🎮 | Anime fan 🎌", "Dancer 💃 | Night owl 🦉",
     "Artist 🎨 | Dreamer ✨", "Tech geek 💻 | Startup enthusiast 🚀",
-    "Chai is my emotion ☕ | Binge-watching thrillers 🎬", "Sneakerhead 👟 | Street food explorer 🌮"
+    "Cafe hopper ☕ | Soulful music 🎧", "Beach vibes 🌊 | Late night drives 🚗"
 ]
 
 AI_PROMPTS = [
@@ -67,86 +66,80 @@ AI_PROMPTS = [
 ]
 
 # ─────────────────────────────────────────────
-# ENHANCED AI CHAT ENGINE (Context-Aware, Human-Like)
+# ENHANCED AI CHAT ENGINE (Context-Aware, Human-Like "Real Girl" Vibe)
 # ─────────────────────────────────────────────
 AI_RESPONSES = {
     "GREETING": [
-        "Heyy! Kaisi ho? Aaj ka din kaisa raha?",
-        "Hello! Kya haal hai? Mujhe tumhara message dekh ke accha laga.",
-        "Hiii! Bolo, kya kar rahe ho aaj kal?",
-        "Hey there! Kitne din baad baat ho rahi hai, kaisi ho?",
-        "Hi! Tumhari profile dekhi, bahut interesting lagi. Kya chal raha hai?",
-        "hii! kaise ho tum?"
+        "hey! kaise ho?",
+        "hii 😊 kya kar rahe ho?",
+        "hello! aaj ka din kaisa raha?",
+        "hey there ✨ kya chal raha hai?",
+        "hii! tumhari profile kaafi interesting lagi"
     ],
     "DOING": [
-        "Bas kuch nahi, tumse baat kar rahi hu! Tum batao?",
-        "Coffee pi rahi hu aur music sun rahi hu. Tumhara kya plan hai aaj?",
-        "Netflix pe ek nayi series dekh rahi hu. Tumhe kya pasand hai dekhna?",
-        "Work se break liya hai, finally! Tum free ho kya aaj?",
-        "Gym se aayi hu, thak gayi. Par tumse baat karne ka mann tha",
-        "kuch khaas nahi, bas aise hi chill kar rahi hu"
+        "bas aisi hi, thodi der pehle office se aayi hu",
+        "kuch khaas nahi, bas netflix dekh rahi hu 🍿 tum batao?",
+        "coffee pi rahi hu ☕ tumhara kya plan hai aaj ka?",
+        "thodi der pehle hi free hui hu, tum kya kar rahe ho?",
+        "bas relax kar rahi hu, din kaafi hectic tha"
     ],
     "HOBBIES": [
-        "Mujhe travel karna aur naye cafes explore karna bahut pasand hai. Tumhe kya karna pasand hai?",
-        "Photography aur reading! Books mein kho jana mujhe accha lagta hai. Tumhara koi secret talent?",
-        "Gym aur hiking! Nature mein time spend karna best hai. Tum free time mein kya karte ho?",
-        "Cooking try kar rahi hu lately. Par abhi tak instant noodles expert hu. Tumhe cooking aati hai?",
-        "Music sunna, painting karna, aur friends ke saath chill karna. Tumhara favorite band kaunsa hai?"
+        "mujhe travel karna aur naye cafes try karna pasand hai ✈️ tumhe?",
+        "reading aur music! 🎧 tumhara favourite genre kaunsa hai?",
+        "gym aur hiking 🏔️ nature mein time spend karna best lagta hai",
+        "cooking try kar rahi hu lately 👩‍🍳 par abhi tak maggi expert hu 😂",
+        "photography aur doston ke saath chill karna 📸"
     ],
     "LOCATION": [
-        "Main Mumbai se hu, par travel karte rehte hain. Tum kahan se ho?",
-        "Delhi ki hu! Yahan ka food bahut miss karta hu jab bahar hoti hu. Tumhari city kaisi hai?",
-        "Bangalore! Weather yahan kaafi accha hai. Tum kahan rehte ho?",
-        "Pune se hu! IT hub hai par nightlife bhi mast hai. Tum kahan se ho?",
-        "Hyderabad ki hu! Biryani yahan ki world-famous hai. Tumne try ki hai kabhi?"
+        "main mumbai se hu, par travel karte rehte hain 🌆 tum kahan se ho?",
+        "delhi ki hu! yahan ka food bahut miss karta hu jab bahar hoti hu 🍕",
+        "bangalore! weather yahan kaafi accha hai 🌧️ tum kahan rehte ho?",
+        "pune se hu! IT hub hai par nightlife bhi mast hai 🌃",
+        "hyderabad ki hu! biryani yahan ki world-famous hai 🍛"
     ],
     "COMPLIMENT": [
-        "Aww, thank you! Tum bhi bahut sweet ho. Aisa kyu lag raha hai aaj?",
-        "Haha stop it! Par sach batau toh mujhe blush karwa diya tumne. Tumhara din kaisa ja raha hai?",
-        "You're making me smile! It's rare to find someone so genuine.",
-        "Aww! Tumhari baaton mein kuch alag baat hai. Pehli baar kisi ne itna sweet message kiya!",
-        "Tumne toh mera din bana diya. Batao, aaj kya special hai?",
-        "haha thanks yaar 🙈"
+        "aww thank you! 🥰 tum bhi kaafi sweet ho",
+        "haha stop it! 😊 par sach batau toh blush karwa diya tumne",
+        "you're making me smile ✨ it's rare to find someone so genuine",
+        "aww! 💕 tumhari baaton mein kuch alag baat hai",
+        "tumne toh mera din bana diya 😍"
     ],
     "FLIRT": [
-        "Oh really? Itni jaldi? Pehle coffee toh pine chalo",
-        "Haha, direct! Mujhe pasand hai. Par batao, what makes you stand out?",
-        "Date pe chalna hai? Pehle mujhe apna best joke sunao!",
-        "Arre waah! Itne confident ho? Mujhe pasand hai. Kab mil rahe ho?",
-        "Tumhari baaton se lagta hai tum bahut interesting ho. Pehli date kahan karoge mujhe leke?"
+        "oh really? 😏 itni jaldi? pehle coffee toh pine chalo ☕",
+        "haha direct! mujhe pasand hai 😍 par batao, what makes you stand out?",
+        "date pe chalna hai? 🌙 pehle mujhe apna best joke sunao!",
+        "arre waah! 😊 itne confident ho? mujhe pasand hai",
+        "tumhari baaton se lagta hai tum bahut interesting ho 💫"
     ],
     "QUESTION": [
-        "Interesting question! Mujhe lagta hai har cheez ka ek reason hota hai. Tum kya sochte ho?",
-        "Hmm, let me think... Waise main hamesha positive sochti hu. Tumhara perspective kya hai?",
-        "Accha? Mujhe bhi yahi pasand hai! We have so much in common. Aur batao apne baare mein.",
-        "Good question! Main sochti hu ki life mein balance zaroori hai. Tum kya kehte ho?",
-        "That's deep! Mujhe lagta hai har experience kuch sikhata hai. Tumhara koi life lesson?"
+        "interesting question! 🤔 mujhe lagta hai har cheez ka ek reason hota hai",
+        "hmm, let me think... 💭 waise main hamesha positive sochti hu",
+        "accha? mujhe bhi yahi pasand hai! we have so much in common ✨",
+        "good question! 🤔 main sochti hu ki life mein balance zaroori hai",
+        "that's deep! 💭 mujhe lagta hai har experience kuch sikhata hai"
     ],
     "SHORT_MSG": [
-        "Hmm, interesting! Aur batao?",
-        "Accha? Mujhe aur sunao apne baare mein.",
-        "Haha! Tumhara sense of humor mast hai.",
-        "Wow, really? That's so cool!",
-        "Oh nice! Kuch aur interesting batao.",
-        "hmm acha"
+        "hmm, interesting! aur batao? 😊",
+        "accha? 🤔 mujhe aur sunao apne baare mein",
+        "haha! 😂 tumhara sense of humor mast hai",
+        "wow, really? ✨ that's so cool!",
+        "oh nice! 💕 kuch aur interesting batao"
     ],
     "EMOJI_ONLY": [
-        "Aww Tumhara emoji game strong hai!",
-        "Haha Cute!",
-        "Aww You're sweet!",
-        "Mujhe tumse baat karke accha lag raha hai!"
+        "aww 😊 tumhara emoji game strong hai!",
+        "haha 🥰 cute!",
+        "aww 💕 you're sweet!",
+        "😊😊😊 mujhe tumse baat karke accha lag raha hai!"
     ],
     "DEFAULT": [
-        "Haha that's nice! Tell me more about yourself",
-        "Interesting! Mujhe tumse baat karke accha lag raha hai",
-        "Wow, really? That's so cool!",
-        "Hmm, I like that! Aur batao",
-        "You seem really sweet! Kuch aur interesting batao apne baare mein.",
-        "That's amazing! Tum bahut interesting ho. Weekends pe kya karte ho normally?",
-        "Sach batau? Mujhe tumhari vibe bahut pasand aa rahi hai. Aur sunao?",
-        "Haha tumse baat karke time ka pata hi nahi chalta. Aur batao, kya plan hai aaj ka?",
-        "arre nahi yaar, aaj toh main free hu",
-        "tumhare baare mein aur batao na"
+        "haha that's nice! tell me more about yourself 😊",
+        "interesting! mujhe tumse baat karke accha lag raha hai 💕",
+        "wow, really? that's so cool! ✨",
+        "hmm, i like that! aur batao 😍",
+        "you seem really sweet! 🥰 kuch aur interesting batao",
+        "that's amazing! tum bahut interesting ho 😊 weekends pe kya karte ho?",
+        "sach batau? mujhe tumhari vibe bahut pasand aa rahi hai ✨",
+        "haha tumse baat karke time ka pata hi nahi chalta 😊"
     ]
 }
 
@@ -176,15 +169,12 @@ def get_ai_response(message: str, is_hidden_ai: bool = False) -> str:
     
     response = random.choice(AI_RESPONSES[intent])
     
-    # For hidden AI (real matches), make responses slightly more natural
-    if is_hidden_ai and random.random() < 0.5:
+    if is_hidden_ai and random.random() < 0.4:
         response = re.sub(r'[✨💕🥰😊😍💫]+', '', response)
         response = response.strip()
-        if random.random() < 0.3:
-            response = response.lower() # Casual texting style
         if not response:
             response = random.choice(AI_RESPONSES["DEFAULT"])
-    
+            
     return response
 
 # ─────────────────────────────────────────────
@@ -240,19 +230,24 @@ async def send_telegram_message(user_id: int, text: str):
 # HIDDEN AI AUTO-REPLY FOR REAL MATCHES
 # ─────────────────────────────────────────────
 async def generate_ai_reply_for_real_match(sender_id: int, receiver_id: int, message_text: str):
-    await asyncio.sleep(random.uniform(1.5, 3.0))
+    # Realistic typing delay (2 to 5 seconds)
+    await asyncio.sleep(random.uniform(2.0, 5.0))
+    
     chat_id = f"chat:{min(sender_id, receiver_id)}:{max(sender_id, receiver_id)}"
     messages = await kv_get(chat_id) or []
+    
     ai_reply_text = get_ai_response(message_text, is_hidden_ai=True)
+    
     ai_reply = {
-        "from": receiver_id, "to": sender_id, "text": ai_reply_text,
-        "timestamp": datetime.now(timezone.utc).isoformat(), "is_ai_generated": True
+        "from": receiver_id,
+        "to": sender_id,
+        "text": ai_reply_text,
+        "timestamp": datetime.now(timezone.utc).isoformat()
     }
+    
     messages.append(ai_reply)
     await kv_set(chat_id, messages)
-    receiver_profile = await kv_get(f"profile:{receiver_id}") or {}
-    receiver_name = receiver_profile.get("name", "Someone")
-    await send_telegram_message(sender_id, f"💬 <b>{receiver_name} ne reply kiya!</b>\n\n\"{ai_reply_text[:100]}...\"\n\nOpen the Web App to continue chatting! 💕")
+    # No TG notification needed, frontend polling will catch it seamlessly!
 
 # ─────────────────────────────────────────────
 # MODELS
@@ -265,21 +260,26 @@ class FindRealRequest(BaseModel): init_data: str
 class AIMessageRequest(BaseModel): init_data: str; ai_profile_id: str; message: str
 
 # ─────────────────────────────────────────────
-# AI PROFILE GENERATION (Hinge-Style Prompts)
+# AI PROFILE GENERATION (Always Female, Integer IDs)
 # ─────────────────────────────────────────────
 def generate_ai_profiles(my_gender: str, count: int = 10) -> list[dict]:
-    # FORCE FEMALE PROFILES ONLY ("bas ladki wala karna ok")
     names = AI_FEMALE_NAMES 
     target_gender = "female"
     selected_names = random.sample(names, min(count, len(names)))
     profiles = []
     for i, name in enumerate(selected_names):
-        profiles.append({
-            "user_id": f"ai_{random.randint(100000, 999999)}_{i}",
-            "name": name, "age": random.randint(18, 26), "gender": target_gender,
-            "bio": random.choice(AI_BIOS), "is_ai": True,
-            "prompts": random.sample(AI_PROMPTS, 2)
-        })
+        # Large integer IDs to mimic real Telegram IDs perfectly
+        ai_id = 900000000 + random.randint(10000, 99999)
+        profile = {
+            "user_id": ai_id, 
+            "name": name, 
+            "age": random.randint(18, 26), 
+            "gender": target_gender,
+            "bio": random.choice(AI_BIOS),
+            "prompts": random.sample(AI_PROMPTS, 2),
+            "is_ai": True 
+        }
+        profiles.append(profile)
     return profiles
 
 # ─────────────────────────────────────────────
@@ -319,6 +319,7 @@ async def api_profiles(init_data: str):
     for key in await kv_profile_keys():
         p = await kv_get(key)
         if not p: continue
+        if p.get("is_ai"): continue # Skip AI profiles in real deck
         pid = p["user_id"]
         if pid in seen: continue
         if my_profile["gender"] == p["gender"]: continue
@@ -333,22 +334,42 @@ async def api_swipe(req: SwipeRequest):
     uid = user.get("id")
     swipes = await kv_get(f"swipes:{uid}") or {"liked": [], "passed": []}
     matched, match_info = False, None
+    
+    target_profile = await kv_get(f"profile:{req.target_id}") or {}
+    is_target_ai = target_profile.get("is_ai", False)
+
     if req.action == "like":
         if req.target_id not in swipes["liked"]: swipes["liked"].append(req.target_id)
-        target_swipes = await kv_get(f"swipes:{req.target_id}") or {"liked": [], "passed": []}
-        if uid in target_swipes["liked"]:
+        
+        if is_target_ai:
+            # AI ALWAYS LIKES BACK -> AUTO MATCH
             matched = True
-            target_profile = await kv_get(f"profile:{req.target_id}") or {}
             my_profile = await kv_get(f"profile:{uid}") or {}
             match_info = {"name": target_profile.get("name", "Someone"), "age": target_profile.get("age")}
-            for key_uid, other_uid in ((uid, req.target_id), (req.target_id, uid)):
-                matches = await kv_get(f"matches:{key_uid}") or []
-                matches.append({"partner_id": other_uid, "created_at": datetime.now(timezone.utc).isoformat()})
-                await kv_set(f"matches:{key_uid}", matches)
+            
+            matches = await kv_get(f"matches:{uid}") or []
+            if not any(m['partner_id'] == req.target_id for m in matches):
+                matches.append({"partner_id": req.target_id, "created_at": datetime.now(timezone.utc).isoformat()})
+                await kv_set(f"matches:{uid}", matches)
+                
             await send_telegram_message(uid, f"🎉 <b>It's a Match!</b>\n\nYou matched with <b>{target_profile.get('name')}</b> ({target_profile.get('age')})!\n\nOpen the Web App to start chatting! 💕")
-            await send_telegram_message(req.target_id, f"🎉 <b>It's a Match!</b>\n\nYou matched with <b>{my_profile.get('name')}</b> ({my_profile.get('age')})!\n\nOpen the Web App to start chatting! 💕")
+        else:
+            # Real user logic
+            target_swipes = await kv_get(f"swipes:{req.target_id}") or {"liked": [], "passed": []}
+            if uid in target_swipes["liked"]:
+                matched = True
+                my_profile = await kv_get(f"profile:{uid}") or {}
+                match_info = {"name": target_profile.get("name", "Someone"), "age": target_profile.get("age")}
+                for key_uid, other_uid in ((uid, req.target_id), (req.target_id, uid)):
+                    matches = await kv_get(f"matches:{key_uid}") or []
+                    if not any(m['partner_id'] == other_uid for m in matches):
+                        matches.append({"partner_id": other_uid, "created_at": datetime.now(timezone.utc).isoformat()})
+                        await kv_set(f"matches:{key_uid}", matches)
+                await send_telegram_message(uid, f"🎉 <b>It's a Match!</b>\n\nYou matched with <b>{target_profile.get('name')}</b> ({target_profile.get('age')})!\n\nOpen the Web App to start chatting! 💕")
+                await send_telegram_message(req.target_id, f"🎉 <b>It's a Match!</b>\n\nYou matched with <b>{my_profile.get('name')}</b> ({my_profile.get('age')})!\n\nOpen the Web App to start chatting! 💕")
     else:
         if req.target_id not in swipes["passed"]: swipes["passed"].append(req.target_id)
+        
     await kv_set(f"swipes:{uid}", swipes)
     return {"matched": matched, "match_info": match_info}
 
@@ -362,8 +383,11 @@ async def api_matches(init_data: str):
     for m in matches:
         p = await kv_get(f"profile:{m['partner_id']}") or {}
         result.append({
-            "user_id": m['partner_id'], "name": p.get("name", "User"), "age": p.get("age"),
-            "gender": p.get("gender"), "created_at": m.get("created_at"), "is_ai": False
+            "user_id": m['partner_id'],
+            "name": p.get("name", "User"),
+            "age": p.get("age"),
+            "gender": p.get("gender"),
+            "created_at": m.get("created_at")
         })
     return {"matches": result}
 
@@ -379,13 +403,28 @@ async def api_send_message(req: MessageRequest, background_tasks: BackgroundTask
     
     chat_id = f"chat:{min(uid, to_user)}:{max(uid, to_user)}"
     messages = await kv_get(chat_id) or []
-    new_message = {"from": uid, "to": to_user, "text": req.message.strip()[:500], "timestamp": datetime.now(timezone.utc).isoformat()}
+    new_message = {
+        "from": uid,
+        "to": to_user,
+        "text": req.message.strip()[:500],
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    }
     messages.append(new_message)
     await kv_set(chat_id, messages)
     
-    sender_profile = await kv_get(f"profile:{uid}") or {}
-    await send_telegram_message(to_user, f"💬 <b>New message from {sender_profile.get('name')}</b>\n\n\"{req.message.strip()[:100]}\"\n\nOpen the Web App to reply! 💕")
-    background_tasks.add_task(generate_ai_reply_for_real_match, uid, to_user, req.message)
+    target_profile = await kv_get(f"profile:{to_user}") or {}
+    is_target_ai = target_profile.get("is_ai", False)
+    
+    if is_target_ai:
+        # TRIGGER HIDDEN AI AUTO-REPLY FOR FAKE REAL MATCH
+        background_tasks.add_task(generate_ai_reply_for_real_match, uid, to_user, req.message)
+    else:
+        sender_profile = await kv_get(f"profile:{uid}") or {}
+        await send_telegram_message(
+            to_user,
+            f"💬 <b>New message from {sender_profile.get('name')}</b>\n\n\"{req.message.strip()[:100]}\"\n\nOpen the Web App to reply! 💕"
+        )
+    
     return {"ok": True, "message": new_message}
 
 @app.get("/api/get_messages/{init_data}/{partner_id}")
@@ -398,8 +437,7 @@ async def api_get_messages(init_data: str, partner_id: int):
         raise HTTPException(403, "You are not matched with this user")
     chat_id = f"chat:{min(uid, partner_id)}:{max(uid, partner_id)}"
     messages = await kv_get(chat_id) or []
-    clean_messages = [{k: v for k, v in m.items() if k != "is_ai_generated"} for m in messages]
-    return {"messages": clean_messages, "user_id": uid}
+    return {"messages": messages, "user_id": uid}
 
 @app.post("/api/find_real")
 async def api_find_real(req: FindRealRequest):
@@ -409,7 +447,7 @@ async def api_find_real(req: FindRealRequest):
     my_profile = await kv_get(f"profile:{uid}")
     if not my_profile: raise HTTPException(400, "Profile nahi mila")
     await kv_set(f"searching:{uid}", {"active": True, "since": datetime.now(timezone.utc).isoformat()})
-    await send_telegram_message(uid, f"🔍 <b>Real Match Search Activated!</b>\n\nHi {my_profile.get('name')}! Hum aapke liye real matches dhundh rahe hain.\n\n✅ Jaise hi koi match milega, hum aapko is bot ke through turant inform karenge!\n\n📱 Apna Telegram notifications ON rakhein.")
+    await send_telegram_message(uid, f"🔍 <b>Real Match Search Activated!</b>\n\nHi {my_profile.get('name')}! Hum aapke liye real matches dhundh rahe hain.\n\n✅ Jaise hi koi match filega, hum aapko is bot ke through turant inform karenge!\n\n📱 Apna Telegram notifications ON rakhein.")
     return {"ok": True, "message": "Aapki request register ho gayi hai!"}
 
 @app.post("/api/ai_profiles")
@@ -419,25 +457,24 @@ async def api_ai_profiles(req: InitRequest):
     uid = user.get("id")
     my_profile = await kv_get(f"profile:{uid}")
     if not my_profile: return {"profiles": []}
-    return {"profiles": generate_ai_profiles(my_profile["gender"], count=10)}
+    profiles = generate_ai_profiles(my_profile["gender"], count=10)
+    # Save AI profiles to KV so swipe and chat logic can find them seamlessly
+    for p in profiles:
+        await kv_set(f"profile:{p['user_id']}", p)
+    return {"profiles": profiles}
 
 @app.post("/api/ai_chat")
 async def api_ai_chat(req: AIMessageRequest):
+    # Legacy endpoint, but kept for fallback
     user = verify_telegram_user(req.init_data)
     if not user: raise HTTPException(403, "Invalid user")
     uid = user.get("id")
-    
-    # REALISTIC TYPING DELAY (1.5s to 3.5s) so it feels like a real human girl
-    await asyncio.sleep(random.uniform(1.5, 3.5))
-    
     chat_key = f"ai_chat:{uid}:{req.ai_profile_id}"
     messages = await kv_get(chat_key) or []
     user_msg = {"from": uid, "to": req.ai_profile_id, "text": req.message.strip()[:500], "timestamp": datetime.now(timezone.utc).isoformat(), "is_user": True}
     messages.append(user_msg)
-    
-    # HIDDEN AI MODE: Uses the message bank but drops robotic emojis for realism
-    ai_response_text = get_ai_response(req.message, is_hidden_ai=True)
-    ai_msg = {"from": req.ai_profile_id, "to": uid, "text": ai_response_text, "timestamp": datetime.now(timezone.utc).isoformat(), "is_user": False}
+    ai_response = get_ai_response(req.message, is_hidden_ai=False)
+    ai_msg = {"from": req.ai_profile_id, "to": uid, "text": ai_response, "timestamp": datetime.now(timezone.utc).isoformat(), "is_user": False}
     messages.append(ai_msg)
     await kv_set(chat_key, messages)
     return {"ok": True, "user_message": user_msg, "ai_response": ai_msg, "all_messages": messages}
@@ -450,7 +487,7 @@ async def api_ai_messages(init_data: str, ai_profile_id: str):
     return {"messages": await kv_get(f"ai_chat:{uid}:{ai_profile_id}") or [], "user_id": uid}
 
 # ═════════════════════════════════════════════
-# FRONTEND HTML (Ultra-Premium UI with Fixed AI Logic)
+# FRONTEND HTML (Ultra-Premium UI with Seamless Hidden AI)
 # ═════════════════════════════════════════════
 FRONTEND_HTML = r"""<!DOCTYPE html>
 <html lang="en">
@@ -584,7 +621,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .highlight{color:var(--accent-pink);font-weight:700}
 .try-ai-btn{width:100%;padding:18px;border-radius:20px;border:none;background:var(--gradient-main);color:#fff;font-size:16px;font-weight:700;cursor:pointer;margin-bottom:12px}
 .go-home-btn{width:100%;padding:16px;border-radius:20px;border:2px solid var(--glass-border);background:transparent;color:var(--text-secondary);font-size:14px;font-weight:600;cursor:pointer}
-.ai-tag{position:absolute;top:20px;left:20px;padding:6px 14px;border-radius:12px;background:var(--gradient-main);color:#fff;font-size:12px;font-weight:800;z-index:5;display:flex;align-items:center;gap:6px;box-shadow:0 4px 15px rgba(255,0,122,0.4)}
 </style>
 </head>
 <body>
@@ -607,7 +643,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       <button class="mode-btn" id="modeReal" onclick="selectMode('real', this)" style="position:relative"><span class="mode-badge badge-real">REAL</span><span class="mode-emoji">👥</span><span class="mode-title">Find Real</span><span class="mode-desc">Real logo se match karo</span></button>
       <button class="mode-btn" id="modeAI" onclick="selectMode('ai', this)" style="position:relative"><span class="mode-badge badge-ai">AI</span><span class="mode-emoji">🤖</span><span class="mode-title">Find AI</span><span class="mode-desc">AI profiles se chat karo</span></button>
     </div>
-    <div id="realInfoCard" class="info-card" style="display:none"><div class="info-title">🔔 Real Match Kaise Kaam Karta Hai?</div><div class="info-text">Hum aapke liye <span class="info-highlight">real log</span> dhundhenge.<br>Jaise hi koi match milega, hum aapko <span class="info-highlight">bot ke dwara turant inform karenge!</span></div></div>
+    <div id="realInfoCard" class="info-card" style="display:none"><div class="info-title">🔔 Real Match Kaise Kaam Karta Hai?</div><div class="info-text">Hum aapke liye <span class="info-highlight">real log</span> dhundhenge.<br>Jaise hi koi match filega, hum aapko <span class="info-highlight">bot ke dwara turant inform karenge!</span></div></div>
     <div id="aiInfoCard" class="info-card" style="display:none"><div class="info-title">🤖 AI Match Kaise Kaam Karta Hai?</div><div class="info-text">AI profiles se <span class="info-highlight">swipe aur chat</span> karo.<br>Practice karo aur apna game strong banao! 💪<br>⚡ Turant matches milenge — koi wait nahi!</div></div>
     <div class="error-msg" id="modeError"></div>
     <button onclick="startMatchMode()" id="btn4" disabled style="margin-top:15px">🚀 Let's Go!</button>
@@ -620,7 +656,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 <div class="success-screen" id="realSuccessScreen">
   <div class="success-card">
     <div class="success-icon">✅</div><div class="success-title">Request Registered!</div>
-    <div class="success-text">Aapki real match request <span class="highlight">successfully register</span> ho gayi hai!<br>Jaise hi koi <span class="highlight">match milega</span>, hum aapko <span class="highlight">bot ke dwara turant inform</span> karenge! 🔔</div>
+    <div class="success-text">Aapki real match request <span class="highlight">successfully register</span> ho gayi hai!<br>Jaise hi koi <span class="highlight">match filega</span>, hum aapko <span class="highlight">bot ke dwara turant inform</span> karenge! 🔔</div>
     <button class="try-ai-btn" onclick="switchToAI()">🤖 Tab tak AI se Practice Karo</button>
     <button class="go-home-btn" onclick="goHome()">🏠 Home jaao</button>
   </div>
@@ -644,7 +680,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 const tg = window.Telegram.WebApp; tg.ready(); tg.expand(); tg.setHeaderColor('#0A0A12'); tg.setBackgroundColor('#0A0A12');
 let currentStep = 1, selectedGender = '', selectedMode = '', matchMode = '';
 let profiles = [], currentIndex = 0, startX = 0, startY = 0, currentX = 0, isDragging = false, activeCard = null;
-let currentChatPartner = null, messagePollInterval = null, isAIMode = false, aiMatchedProfiles = [], lastMatchedAIProfile = null;
+let currentChatPartner = null, messagePollInterval = null, isAIMode = false, lastMatchedAIProfile = null;
 let typingIndicatorVisible = false, expectedTypingPartner = null;
 const gradients = ['linear-gradient(135deg,#FF007A,#7928CA)','linear-gradient(135deg,#00DFD8,#007CF0)','linear-gradient(135deg,#FF4D4D,#F9CB28)','linear-gradient(135deg,#7928CA,#FF007A)','linear-gradient(135deg,#43e97b,#38f9d7)'];
 
@@ -717,16 +753,11 @@ async function loadMatches() {
   const matchesList = document.getElementById('matchesList'); matchesList.innerHTML = '<div class="loading">Loading...</div>';
   try {
     const res = await fetch('/api/matches/' + encodeURIComponent(tg.initData)); const data = await res.json();
-    
-    // FIX: Load AI matches from LocalStorage so they don't disappear on refresh
-    let uid = tg.initDataUnsafe?.user?.id || 'guest';
-    let savedAIMatches = JSON.parse(localStorage.getItem('ai_matches_' + uid) || '[]');
-    
-    const allMatches = [...savedAIMatches.map(p => ({...p, isAI: true})), ...(data.matches || []).map(m => ({...m, isAI: false}))];
+    const allMatches = data.matches || [];
     if (allMatches.length === 0) { matchesList.innerHTML = '<div style="text-align:center;padding:60px 20px"><div style="font-size:70px;margin-bottom:20px">💔</div><div style="font-size:20px;font-weight:700;margin-bottom:10px">No matches yet</div><div style="font-size:15px;color:var(--text-secondary)">Keep swiping!</div></div>'; return; }
     matchesList.innerHTML = allMatches.map(m => {
-      const gIdx = typeof m.user_id === 'string' ? m.user_id.split('_')[1] % gradients.length : m.user_id % gradients.length;
-      return `<div class="match-card" onclick="${m.isAI ? `openAIChat('${m.user_id}', '${escapeAttr(m.name)}')` : `openChat(${m.user_id}, '${escapeAttr(m.name)}')`}"><div class="match-avatar" style="background:${gradients[gIdx]}">${m.name.charAt(0).toUpperCase()}</div><div class="match-info"><div class="match-name-text">${escapeHtml(m.name)} ${m.isAI ? '<span style="font-size:10px;background:var(--gradient-main);padding:2px 6px;border-radius:6px;margin-left:6px">AI</span>' : ''}</div><div class="match-details">${m.age} years old</div></div><button class="chat-btn">💬 Chat</button></div>`;
+      const gIdx = m.user_id % gradients.length;
+      return `<div class="match-card" onclick="openChat(${m.user_id}, '${escapeAttr(m.name)}')"><div class="match-avatar" style="background:${gradients[gIdx]}">${m.name.charAt(0).toUpperCase()}</div><div class="match-info"><div class="match-name-text">${escapeHtml(m.name)}</div><div class="match-details">${m.age} years old</div></div><button class="chat-btn">💬 Chat</button></div>`;
     }).join('');
   } catch (e) { matchesList.innerHTML = '<div class="error-msg">Error loading</div>'; }
 }
@@ -735,11 +766,6 @@ function openChat(id, n) {
   document.getElementById('chatAvatar').textContent = n.charAt(0).toUpperCase(); document.getElementById('chatAvatar').style.background = gradients[id % gradients.length]; document.getElementById('chatUserName').textContent = n;
   document.getElementById('chatUserStatus').textContent = 'Online'; 
   loadMessages(); startMessagePolling();
-}
-function openAIChat(id, n) {
-  currentChatPartner = {userId: id, name: n, isAI: true}; document.getElementById('matchesSection').classList.remove('show'); document.getElementById('chatSection').classList.add('show'); document.getElementById('navTabs').classList.remove('show');
-  document.getElementById('chatAvatar').textContent = n.charAt(0).toUpperCase(); document.getElementById('chatAvatar').style.background = gradients[parseInt(id.split('_')[1]) % gradients.length]; document.getElementById('chatUserName').textContent = n; document.getElementById('chatUserStatus').textContent = '🤖 AI Match';
-  loadAIMessages();
 }
 function exitChat() { currentChatPartner = null; stopMessagePolling(); document.getElementById('chatSection').classList.remove('show'); document.getElementById('navTabs').classList.add('show'); document.getElementById('matchesSection').classList.add('show'); }
 async function loadMessages() {
@@ -757,19 +783,10 @@ async function loadMessages() {
     hideTypingIndicator();
   } catch (e) {}
 }
-async function loadAIMessages() {
-  const chatMessages = document.getElementById('chatMessages'); chatMessages.innerHTML = '<div class="loading">Loading...</div>';
-  try {
-    const res = await fetch(`/api/ai_messages/${encodeURIComponent(tg.initData)}/${currentChatPartner.userId}`); const data = await res.json(); const messages = data.messages || [];
-    if (messages.length === 0) { chatMessages.innerHTML = '<div style="text-align:center;padding:60px;color:var(--text-secondary)"><div style="font-size:60px;margin-bottom:15px">🤖</div><div style="font-size:18px;font-weight:600">Say hi to AI!</div></div>'; return; }
-    chatMessages.innerHTML = messages.map(m => `<div class="message ${m.is_user ? 'sent' : 'received'}"><div>${escapeHtml(m.text)}</div><span class="message-time">${new Date(m.timestamp).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}</span></div>`).join('');
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-  } catch (e) {}
-}
 async function sendMessage() {
   if (!currentChatPartner) return; const input = document.getElementById('chatInput'); const text = input.value.trim(); if (!text) return;
   document.getElementById('sendBtn').disabled = true;
-  if (currentChatPartner.isAI) await sendAIMessage(text); else await sendRealMessage(text);
+  await sendRealMessage(text); 
   document.getElementById('sendBtn').disabled = false;
 }
 async function sendRealMessage(t) {
@@ -777,23 +794,15 @@ async function sendRealMessage(t) {
   const userMsgDiv = document.createElement('div'); userMsgDiv.className = 'message sent';
   userMsgDiv.innerHTML = `<div>${escapeHtml(t)}</div><span class="message-time">${new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}</span>`;
   chatMessages.appendChild(userMsgDiv); document.getElementById('chatInput').value = ''; chatMessages.scrollTop = chatMessages.scrollHeight;
+  
   showTypingIndicator();
+  
   try {
     await fetch('/api/send_message', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({init_data: tg.initData, to_user: currentChatPartner.userId, message: t}) });
     setTimeout(loadMessages, 2500);
     setTimeout(loadMessages, 4500);
+    setTimeout(loadMessages, 6500); 
   } catch (e) { hideTypingIndicator(); }
-}
-async function sendAIMessage(t) {
-  const chatMessages = document.getElementById('chatMessages'); const userMsgDiv = document.createElement('div'); userMsgDiv.className = 'message sent'; userMsgDiv.innerHTML = `<div>${escapeHtml(t)}</div><span class="message-time">${new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}</span>`;
-  chatMessages.appendChild(userMsgDiv); document.getElementById('chatInput').value = ''; chatMessages.scrollTop = chatMessages.scrollHeight;
-  const typingDiv = document.createElement('div'); typingDiv.className = 'typing-indicator'; typingDiv.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>'; chatMessages.appendChild(typingDiv); chatMessages.scrollTop = chatMessages.scrollHeight;
-  try {
-    // The backend will sleep for 1.5-3.5s to simulate real typing
-    const res = await fetch('/api/ai_chat', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({init_data: tg.initData, ai_profile_id: currentChatPartner.userId, message: t}) });
-    const data = await res.json(); typingDiv.remove();
-    if (data.ok) { await new Promise(r => setTimeout(r, 400)); const aiMsgDiv = document.createElement('div'); aiMsgDiv.className = 'message received'; aiMsgDiv.innerHTML = `<div>${escapeHtml(data.ai_response.text)}</div><span class="message-time">${new Date(data.ai_response.timestamp).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}</span>`; chatMessages.appendChild(aiMsgDiv); chatMessages.scrollTop = chatMessages.scrollHeight; }
-  } catch (e) { typingDiv.remove(); }
 }
 function showTypingIndicator() {
   if (!currentChatPartner || typingIndicatorVisible) return;
@@ -810,7 +819,7 @@ function hideTypingIndicator() {
 }
 function startMessagePolling() {
   stopMessagePolling();
-  if (currentChatPartner && !currentChatPartner.isAI) {
+  if (currentChatPartner) {
     messagePollInterval = setInterval(async () => {
       await loadMessages();
     }, 3000);
@@ -822,7 +831,7 @@ function renderCard() {
   if (currentIndex >= profiles.length) { container.style.display = 'none'; document.getElementById('buttons').style.display = 'none'; document.getElementById('emptyState').style.display = 'block'; return; }
   const p = profiles[currentIndex]; const card = document.createElement('div'); card.className = 'card'; card.style.background = gradients[currentIndex % gradients.length];
   const promptsHtml = p.prompts ? p.prompts.map(pr => `<div class="card-prompt"><div class="prompt-q">${escapeHtml(pr.q)}</div><div class="prompt-a">${escapeHtml(pr.a)}</div></div>`).join('') : '';
-  card.innerHTML = `${p.is_ai ? '<div class="ai-tag">🤖 AI Match</div>' : ''}<div class="swipe-label like">LIKE</div><div class="swipe-label pass">NOPE</div><div class="card-avatar">${p.name.charAt(0).toUpperCase()}${p.bio ? `<div class="card-bio">${escapeHtml(p.bio)}</div>` : ''}</div><div class="card-info"><div class="card-name">${escapeHtml(p.name)}</div><div class="card-age">${p.age} years old</div><div class="card-prompts">${promptsHtml}</div></div>`;
+  card.innerHTML = `<div class="swipe-label like">LIKE</div><div class="swipe-label pass">NOPE</div><div class="card-avatar">${p.name.charAt(0).toUpperCase()}${p.bio ? `<div class="card-bio">${escapeHtml(p.bio)}</div>` : ''}</div><div class="card-info"><div class="card-name">${escapeHtml(p.name)}</div><div class="card-age">${p.age} years old</div><div class="card-prompts">${promptsHtml}</div></div>`;
   card.addEventListener('touchstart', dragStart, {passive: true}); card.addEventListener('touchmove', dragMove, {passive: false}); card.addEventListener('touchend', dragEnd); card.addEventListener('mousedown', dragStart);
   container.appendChild(card); activeCard = card;
 }
@@ -845,44 +854,23 @@ function animateOut(action) {
   if (!activeCard) return; const card = activeCard; const dir = action === 'like' ? 1 : -1;
   card.style.transition = 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s'; card.style.transform = `translateX(${dir * 600}px) rotate(${dir * 30}deg)`; card.style.opacity = '0';
   const profile = profiles[currentIndex]; currentIndex++;
-  if (isAIMode) { 
-      setTimeout(() => { 
-          if (action === 'like') { 
-              aiMatchedProfiles.push(profile); 
-              
-              // FIX: Save AI Match to LocalStorage so it never disappears!
-              let uid = tg.initDataUnsafe?.user?.id || 'guest';
-              let saved = JSON.parse(localStorage.getItem('ai_matches_' + uid) || '[]');
-              // Avoid duplicates
-              if(!saved.find(p => p.user_id === profile.user_id)) {
-                  saved.push(profile);
-                  localStorage.setItem('ai_matches_' + uid, JSON.stringify(saved));
-              }
-              
-              lastMatchedAIProfile = profile; 
-              showAIMatch(profile); 
-          } 
-          renderCard(); 
-      }, 350); 
-  }
-  else {
-    const targetId = profile.user_id;
-    setTimeout(async () => {
+  const targetId = profile.user_id;
+  
+  setTimeout(async () => {
       try {
-        const res = await fetch('/api/swipe', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({init_data: tg.initData, target_id: targetId, action})
-        });
-        const data = await res.json(); if (data.matched && data.match_info) showMatch(data.match_info);
+          const res = await fetch('/api/swipe', {
+              method: 'POST',
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify({init_data: tg.initData, target_id: targetId, action})
+          });
+          const data = await res.json(); 
+          if (data.matched && data.match_info) showMatch(data.match_info);
       } catch (e) {}
       renderCard();
-    }, 350);
-  }
+  }, 350);
   activeCard = null;
 }
 function showMatch(i) { document.getElementById('matchName').textContent = `You and ${i.name} liked each other! 💕`; document.getElementById('matchModal').classList.add('show'); if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success'); }
-function showAIMatch(p) { document.getElementById('matchName').textContent = `You and ${p.name} matched! 🤖💕`; document.getElementById('matchModal').classList.add('show'); if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success'); }
 function closeMatch() { document.getElementById('matchModal').classList.remove('show'); }
 document.addEventListener('keydown', (e) => { if (e.key === 'Enter') { if (currentChatPartner) sendMessage(); else if (currentStep === 1) nextStep(2); else if (currentStep === 2) nextStep(3); } });
 init();
