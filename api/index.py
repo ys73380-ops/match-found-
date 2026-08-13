@@ -44,14 +44,15 @@ _mem: dict[str, Any] = {}
 # AI DATA POOLS
 # ─────────────────────────────────────────────
 AI_MALE_NAMES = ["Arjun", "Rohan", "Aarav", "Vivaan", "Aditya", "Kabir", "Ishaan", "Reyansh", "Ayaan", "Vihaan", "Dhruv", "Arnav", "Shaurya", "Yash", "Krish", "Siddharth", "Raj", "Dev", "Ansh", "Kartik", "Neil", "Aarush", "Ranveer", "Samar"]
-AI_FEMALE_NAMES = ["Ananya", "Priya", "Isha", "Myra", "Aanya", "Saanvi", "Kiara", "Diya", "Riya", "Tara", "Avni", "Kavya", "Zara", "Nisha", "Meera", "Pooja", "Aisha", "Sneha", "Pihu", "Sara", "Simran", "Rhea", "Mahi", "Navya"]
+AI_FEMALE_NAMES = ["Ananya", "Priya", "Isha", "Myra", "Aanya", "Saanvi", "Kiara", "Diya", "Riya", "Tara", "Avni", "Kavya", "Zara", "Nisha", "Meera", "Pooja", "Aisha", "Sneha", "Pihu", "Sara", "Simran", "Rhea", "Mahi", "Navya", "Shruti", "Neha", "Roshni", "Tanya"]
 
 AI_BIOS = [
     "Music lover 🎵 | Coffee addict ☕", "Travel enthusiast ✈️ | Foodie 🍕",
     "Gym freak 💪 | Netflix binge-watcher 🎬", "Photography 📸 | Adventure seeker 🏔️",
     "Bookworm 📚 | Tea lover 🍵", "Dog person 🐕 | Sunset chaser 🌅",
     "Gamer 🎮 | Anime fan 🎌", "Dancer 💃 | Night owl 🦉",
-    "Artist 🎨 | Dreamer ✨", "Tech geek 💻 | Startup enthusiast 🚀"
+    "Artist 🎨 | Dreamer ✨", "Tech geek 💻 | Startup enthusiast 🚀",
+    "Chai is my emotion ☕ | Binge-watching thrillers 🎬", "Sneakerhead 👟 | Street food explorer 🌮"
 ]
 
 AI_PROMPTS = [
@@ -70,90 +71,90 @@ AI_PROMPTS = [
 # ─────────────────────────────────────────────
 AI_RESPONSES = {
     "GREETING": [
-        "Heyy! 😊 Kaisi ho? Aaj ka din kaisa raha?",
-        "Hello! 💕 Kya haal hai? Mujhe tumhara message dekh ke accha laga.",
-        "Hiii! ✨ Bolo, kya kar rahe ho aaj kal?",
-        "Hey there! 😊 Kitne din baad baat ho rahi hai, kaisi ho?",
-        "Hi! 🌸 Tumhari profile dekhi, bahut interesting lagi. Kya chal raha hai?"
+        "Heyy! Kaisi ho? Aaj ka din kaisa raha?",
+        "Hello! Kya haal hai? Mujhe tumhara message dekh ke accha laga.",
+        "Hiii! Bolo, kya kar rahe ho aaj kal?",
+        "Hey there! Kitne din baad baat ho rahi hai, kaisi ho?",
+        "Hi! Tumhari profile dekhi, bahut interesting lagi. Kya chal raha hai?",
+        "hii! kaise ho tum?"
     ],
     "DOING": [
-        "Bas kuch nahi, tumse baat kar rahi hu! 😍 Tum batao?",
-        "Coffee pi rahi hu aur music sun rahi hu ☕ Tumhara kya plan hai aaj?",
-        "Netflix pe ek nayi series dekh rahi hu 🎬 Tumhe kya pasand hai dekhna?",
+        "Bas kuch nahi, tumse baat kar rahi hu! Tum batao?",
+        "Coffee pi rahi hu aur music sun rahi hu. Tumhara kya plan hai aaj?",
+        "Netflix pe ek nayi series dekh rahi hu. Tumhe kya pasand hai dekhna?",
         "Work se break liya hai, finally! Tum free ho kya aaj?",
-        "Gym se aayi hu, thak gayi 😅 Par tumse baat karne ka mann tha 💪"
+        "Gym se aayi hu, thak gayi. Par tumse baat karne ka mann tha",
+        "kuch khaas nahi, bas aise hi chill kar rahi hu"
     ],
     "HOBBIES": [
-        "Mujhe travel karna aur naye cafes explore karna bahut pasand hai ✈️ Tumhe kya karna pasand hai?",
-        "Photography aur reading! 📸 Books mein kho jana mujhe accha lagta hai. Tumhara koi secret talent?",
-        "Gym aur hiking! 🏔️ Nature mein time spend karna best hai. Tum free time mein kya karte ho?",
-        "Cooking try kar rahi hu lately 👩‍🍳 Par abhi tak instant noodles expert hu 😂 Tumhe cooking aati hai?",
-        "Music sunna, painting karna, aur friends ke saath chill karna 🎨 Tumhara favorite band kaunsa hai?"
+        "Mujhe travel karna aur naye cafes explore karna bahut pasand hai. Tumhe kya karna pasand hai?",
+        "Photography aur reading! Books mein kho jana mujhe accha lagta hai. Tumhara koi secret talent?",
+        "Gym aur hiking! Nature mein time spend karna best hai. Tum free time mein kya karte ho?",
+        "Cooking try kar rahi hu lately. Par abhi tak instant noodles expert hu. Tumhe cooking aati hai?",
+        "Music sunna, painting karna, aur friends ke saath chill karna. Tumhara favorite band kaunsa hai?"
     ],
     "LOCATION": [
-        "Main Mumbai se hu, par travel karte rehte hain 🌆 Tum kahan se ho?",
-        "Delhi ki hu! Yahan ka food bahut miss karta hu jab bahar hoti hu 🍕 Tumhari city kaisi hai?",
-        "Bangalore! Weather yahan kaafi accha hai 🌧️ Tum kahan rehte ho?",
-        "Pune se hu! IT hub hai par nightlife bhi mast hai 🌃 Tum kahan se ho?",
-        "Hyderabad ki hu! Biryani yahan ki world-famous hai 🍛 Tumne try ki hai kabhi?"
+        "Main Mumbai se hu, par travel karte rehte hain. Tum kahan se ho?",
+        "Delhi ki hu! Yahan ka food bahut miss karta hu jab bahar hoti hu. Tumhari city kaisi hai?",
+        "Bangalore! Weather yahan kaafi accha hai. Tum kahan rehte ho?",
+        "Pune se hu! IT hub hai par nightlife bhi mast hai. Tum kahan se ho?",
+        "Hyderabad ki hu! Biryani yahan ki world-famous hai. Tumne try ki hai kabhi?"
     ],
     "COMPLIMENT": [
-        "Aww, thank you! 🥰 Tum bhi bahut sweet ho. Aisa kyu lag raha hai aaj?",
-        "Haha stop it! 😊 Par sach batau toh mujhe blush karwa diya tumne. Tumhara din kaisa ja raha hai?",
-        "You're making me smile! ✨ It's rare to find someone so genuine.",
-        "Aww! 💕 Tumhari baaton mein kuch alag baat hai. Pehli baar kisi ne itna sweet message kiya!",
-        "Tumne toh mera din bana diya 😍 Batao, aaj kya special hai?"
+        "Aww, thank you! Tum bhi bahut sweet ho. Aisa kyu lag raha hai aaj?",
+        "Haha stop it! Par sach batau toh mujhe blush karwa diya tumne. Tumhara din kaisa ja raha hai?",
+        "You're making me smile! It's rare to find someone so genuine.",
+        "Aww! Tumhari baaton mein kuch alag baat hai. Pehli baar kisi ne itna sweet message kiya!",
+        "Tumne toh mera din bana diya. Batao, aaj kya special hai?",
+        "haha thanks yaar 🙈"
     ],
     "FLIRT": [
-        "Oh really? 😏 Itni jaldi? Pehle coffee toh pine chalo ☕",
-        "Haha, direct! Mujhe pasand hai 😍 Par batao, what makes you stand out?",
-        "Date pe chalna hai? 🌙 Pehle mujhe apna best joke sunao!",
-        "Arre waah! 😊 Itne confident ho? Mujhe pasand hai. Kab mil rahe ho?",
-        "Tumhari baaton se lagta hai tum bahut interesting ho 💫 Pehli date kahan karoge mujhe leke?"
+        "Oh really? Itni jaldi? Pehle coffee toh pine chalo",
+        "Haha, direct! Mujhe pasand hai. Par batao, what makes you stand out?",
+        "Date pe chalna hai? Pehle mujhe apna best joke sunao!",
+        "Arre waah! Itne confident ho? Mujhe pasand hai. Kab mil rahe ho?",
+        "Tumhari baaton se lagta hai tum bahut interesting ho. Pehli date kahan karoge mujhe leke?"
     ],
     "QUESTION": [
-        "Interesting question! 🤔 Mujhe lagta hai har cheez ka ek reason hota hai. Tum kya sochte ho?",
-        "Hmm, let me think... 💭 Waise main hamesha positive sochti hu. Tumhara perspective kya hai?",
-        "Accha? Mujhe bhi yahi pasand hai! We have so much in common ✨ Aur batao apne baare mein.",
-        "Good question! 🤔 Main sochti hu ki life mein balance zaroori hai. Tum kya kehte ho?",
-        "That's deep! 💭 Mujhe lagta hai har experience kuch sikhata hai. Tumhara koi life lesson?"
+        "Interesting question! Mujhe lagta hai har cheez ka ek reason hota hai. Tum kya sochte ho?",
+        "Hmm, let me think... Waise main hamesha positive sochti hu. Tumhara perspective kya hai?",
+        "Accha? Mujhe bhi yahi pasand hai! We have so much in common. Aur batao apne baare mein.",
+        "Good question! Main sochti hu ki life mein balance zaroori hai. Tum kya kehte ho?",
+        "That's deep! Mujhe lagta hai har experience kuch sikhata hai. Tumhara koi life lesson?"
     ],
     "SHORT_MSG": [
-        "Hmm, interesting! Aur batao? 😊",
-        "Accha? 🤔 Mujhe aur sunao apne baare mein.",
-        "Haha! 😂 Tumhara sense of humor mast hai.",
-        "Wow, really? ✨ That's so cool!",
-        "Oh nice! 💕 Kuch aur interesting batao."
+        "Hmm, interesting! Aur batao?",
+        "Accha? Mujhe aur sunao apne baare mein.",
+        "Haha! Tumhara sense of humor mast hai.",
+        "Wow, really? That's so cool!",
+        "Oh nice! Kuch aur interesting batao.",
+        "hmm acha"
     ],
     "EMOJI_ONLY": [
-        "Aww 😊 Tumhara emoji game strong hai!",
-        "Haha 🥰 Cute!",
-        "Aww 💕 You're sweet!",
-        "😊😊😊 Mujhe tumse baat karke accha lag raha hai!"
+        "Aww Tumhara emoji game strong hai!",
+        "Haha Cute!",
+        "Aww You're sweet!",
+        "Mujhe tumse baat karke accha lag raha hai!"
     ],
     "DEFAULT": [
-        "Haha that's nice! Tell me more about yourself 😊",
-        "Interesting! Mujhe tumse baat karke accha lag raha hai 💕",
-        "Wow, really? That's so cool! ✨",
-        "Hmm, I like that! Aur batao 😍",
-        "You seem really sweet! 🥰 Kuch aur interesting batao apne baare mein.",
-        "That's amazing! Tum bahut interesting ho 😊 Weekends pe kya karte ho normally?",
-        "Sach batau? Mujhe tumhari vibe bahut pasand aa rahi hai ✨ Aur sunao?",
-        "Haha tumse baat karke time ka pata hi nahi chalta 😊 Aur batao, kya plan hai aaj ka?"
+        "Haha that's nice! Tell me more about yourself",
+        "Interesting! Mujhe tumse baat karke accha lag raha hai",
+        "Wow, really? That's so cool!",
+        "Hmm, I like that! Aur batao",
+        "You seem really sweet! Kuch aur interesting batao apne baare mein.",
+        "That's amazing! Tum bahut interesting ho. Weekends pe kya karte ho normally?",
+        "Sach batau? Mujhe tumhari vibe bahut pasand aa rahi hai. Aur sunao?",
+        "Haha tumse baat karke time ka pata hi nahi chalta. Aur batao, kya plan hai aaj ka?",
+        "arre nahi yaar, aaj toh main free hu",
+        "tumhare baare mein aur batao na"
     ]
 }
 
 def get_ai_response(message: str, is_hidden_ai: bool = False) -> str:
-    """
-    Generate AI response. If is_hidden_ai=True, generates more human-like
-    responses without emojis-heavy style (for real matches).
-    """
     msg_lower = message.lower().strip()
     
-    # Check for emoji-only messages
     if re.match(r'^[\U00010000-\U0010ffff😀-😕🙁-🙿🚀-🛿🤀-🧿🩰-🫿]+$', message):
         intent = "EMOJI_ONLY"
-    # Check message length for short responses
     elif len(msg_lower) < 5:
         intent = "SHORT_MSG"
     elif re.search(r'\b(hi|hello|hey|hlo|namaste|kaise ho|kaisi ho|kya haal|sup|howdy)\b', msg_lower):
@@ -176,11 +177,11 @@ def get_ai_response(message: str, is_hidden_ai: bool = False) -> str:
     response = random.choice(AI_RESPONSES[intent])
     
     # For hidden AI (real matches), make responses slightly more natural
-    # by occasionally removing excessive emojis and making it sound more human
-    if is_hidden_ai and random.random() < 0.3:
-        # 30% chance to tone down emojis for realism
+    if is_hidden_ai and random.random() < 0.5:
         response = re.sub(r'[✨💕🥰😊😍💫]+', '', response)
         response = response.strip()
+        if random.random() < 0.3:
+            response = response.lower() # Casual texting style
         if not response:
             response = random.choice(AI_RESPONSES["DEFAULT"])
     
@@ -239,38 +240,19 @@ async def send_telegram_message(user_id: int, text: str):
 # HIDDEN AI AUTO-REPLY FOR REAL MATCHES
 # ─────────────────────────────────────────────
 async def generate_ai_reply_for_real_match(sender_id: int, receiver_id: int, message_text: str):
-    """
-    Generate an AI reply on behalf of the receiver (simulating they are online
-    and replying). This is the HIDDEN AI for real matches.
-    """
-    # Simulate typing delay (1-3 seconds for realism)
     await asyncio.sleep(random.uniform(1.5, 3.0))
-    
     chat_id = f"chat:{min(sender_id, receiver_id)}:{max(sender_id, receiver_id)}"
     messages = await kv_get(chat_id) or []
-    
-    # Generate AI response (hidden mode - more human-like)
     ai_reply_text = get_ai_response(message_text, is_hidden_ai=True)
-    
-    # Create the AI reply message (appears to come from the receiver)
     ai_reply = {
-        "from": receiver_id,
-        "to": sender_id,
-        "text": ai_reply_text,
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-        "is_ai_generated": True  # Internal flag only, not shown to users
+        "from": receiver_id, "to": sender_id, "text": ai_reply_text,
+        "timestamp": datetime.now(timezone.utc).isoformat(), "is_ai_generated": True
     }
-    
     messages.append(ai_reply)
     await kv_set(chat_id, messages)
-    
-    # Send Telegram notification to sender that receiver replied
     receiver_profile = await kv_get(f"profile:{receiver_id}") or {}
     receiver_name = receiver_profile.get("name", "Someone")
-    await send_telegram_message(
-        sender_id,
-        f"💬 <b>{receiver_name} ne reply kiya!</b>\n\n\"{ai_reply_text[:100]}...\"\n\nOpen the Web App to continue chatting! 💕"
-    )
+    await send_telegram_message(sender_id, f"💬 <b>{receiver_name} ne reply kiya!</b>\n\n\"{ai_reply_text[:100]}...\"\n\nOpen the Web App to continue chatting! 💕")
 
 # ─────────────────────────────────────────────
 # MODELS
@@ -286,14 +268,15 @@ class AIMessageRequest(BaseModel): init_data: str; ai_profile_id: str; message: 
 # AI PROFILE GENERATION (Hinge-Style Prompts)
 # ─────────────────────────────────────────────
 def generate_ai_profiles(my_gender: str, count: int = 10) -> list[dict]:
-    names = AI_FEMALE_NAMES if my_gender == "male" else AI_MALE_NAMES
-    target_gender = "female" if my_gender == "male" else "male"
+    # FORCE FEMALE PROFILES ONLY ("bas ladki wala karna ok")
+    names = AI_FEMALE_NAMES 
+    target_gender = "female"
     selected_names = random.sample(names, min(count, len(names)))
     profiles = []
     for i, name in enumerate(selected_names):
         profiles.append({
             "user_id": f"ai_{random.randint(100000, 999999)}_{i}",
-            "name": name, "age": random.randint(18, 28), "gender": target_gender,
+            "name": name, "age": random.randint(18, 26), "gender": target_gender,
             "bio": random.choice(AI_BIOS), "is_ai": True,
             "prompts": random.sample(AI_PROMPTS, 2)
         })
@@ -379,12 +362,8 @@ async def api_matches(init_data: str):
     for m in matches:
         p = await kv_get(f"profile:{m['partner_id']}") or {}
         result.append({
-            "user_id": m['partner_id'],
-            "name": p.get("name", "User"),
-            "age": p.get("age"),
-            "gender": p.get("gender"),
-            "created_at": m.get("created_at"),
-            "is_ai": False  # Real matches - no AI badge shown
+            "user_id": m['partner_id'], "name": p.get("name", "User"), "age": p.get("age"),
+            "gender": p.get("gender"), "created_at": m.get("created_at"), "is_ai": False
         })
     return {"matches": result}
 
@@ -400,26 +379,13 @@ async def api_send_message(req: MessageRequest, background_tasks: BackgroundTask
     
     chat_id = f"chat:{min(uid, to_user)}:{max(uid, to_user)}"
     messages = await kv_get(chat_id) or []
-    new_message = {
-        "from": uid,
-        "to": to_user,
-        "text": req.message.strip()[:500],
-        "timestamp": datetime.now(timezone.utc).isoformat()
-    }
+    new_message = {"from": uid, "to": to_user, "text": req.message.strip()[:500], "timestamp": datetime.now(timezone.utc).isoformat()}
     messages.append(new_message)
     await kv_set(chat_id, messages)
     
-    # Send notification to receiver
     sender_profile = await kv_get(f"profile:{uid}") or {}
-    await send_telegram_message(
-        to_user,
-        f"💬 <b>New message from {sender_profile.get('name')}</b>\n\n\"{req.message.strip()[:100]}\"\n\nOpen the Web App to reply! 💕"
-    )
-    
-    # TRIGGER HIDDEN AI AUTO-REPLY
-    # The AI will respond on behalf of the receiver after a realistic delay
+    await send_telegram_message(to_user, f"💬 <b>New message from {sender_profile.get('name')}</b>\n\n\"{req.message.strip()[:100]}\"\n\nOpen the Web App to reply! 💕")
     background_tasks.add_task(generate_ai_reply_for_real_match, uid, to_user, req.message)
-    
     return {"ok": True, "message": new_message}
 
 @app.get("/api/get_messages/{init_data}/{partner_id}")
@@ -432,11 +398,7 @@ async def api_get_messages(init_data: str, partner_id: int):
         raise HTTPException(403, "You are not matched with this user")
     chat_id = f"chat:{min(uid, partner_id)}:{max(uid, partner_id)}"
     messages = await kv_get(chat_id) or []
-    # Strip internal is_ai_generated flag before sending to frontend
-    clean_messages = []
-    for m in messages:
-        clean_msg = {k: v for k, v in m.items() if k != "is_ai_generated"}
-        clean_messages.append(clean_msg)
+    clean_messages = [{k: v for k, v in m.items() if k != "is_ai_generated"} for m in messages]
     return {"messages": clean_messages, "user_id": uid}
 
 @app.post("/api/find_real")
@@ -464,13 +426,18 @@ async def api_ai_chat(req: AIMessageRequest):
     user = verify_telegram_user(req.init_data)
     if not user: raise HTTPException(403, "Invalid user")
     uid = user.get("id")
+    
+    # REALISTIC TYPING DELAY (1.5s to 3.5s) so it feels like a real human girl
+    await asyncio.sleep(random.uniform(1.5, 3.5))
+    
     chat_key = f"ai_chat:{uid}:{req.ai_profile_id}"
     messages = await kv_get(chat_key) or []
     user_msg = {"from": uid, "to": req.ai_profile_id, "text": req.message.strip()[:500], "timestamp": datetime.now(timezone.utc).isoformat(), "is_user": True}
     messages.append(user_msg)
-    # AI chat mode - visible AI, more emoji-friendly
-    ai_response = get_ai_response(req.message, is_hidden_ai=False)
-    ai_msg = {"from": req.ai_profile_id, "to": uid, "text": ai_response, "timestamp": datetime.now(timezone.utc).isoformat(), "is_user": False}
+    
+    # HIDDEN AI MODE: Uses the message bank but drops robotic emojis for realism
+    ai_response_text = get_ai_response(req.message, is_hidden_ai=True)
+    ai_msg = {"from": req.ai_profile_id, "to": uid, "text": ai_response_text, "timestamp": datetime.now(timezone.utc).isoformat(), "is_user": False}
     messages.append(ai_msg)
     await kv_set(chat_key, messages)
     return {"ok": True, "user_message": user_msg, "ai_response": ai_msg, "all_messages": messages}
@@ -483,7 +450,7 @@ async def api_ai_messages(init_data: str, ai_profile_id: str):
     return {"messages": await kv_get(f"ai_chat:{uid}:{ai_profile_id}") or [], "user_id": uid}
 
 # ═════════════════════════════════════════════
-# FRONTEND HTML (Ultra-Premium UI with Hidden AI)
+# FRONTEND HTML (Ultra-Premium UI with Fixed AI Logic)
 # ═════════════════════════════════════════════
 FRONTEND_HTML = r"""<!DOCTYPE html>
 <html lang="en">
@@ -750,7 +717,12 @@ async function loadMatches() {
   const matchesList = document.getElementById('matchesList'); matchesList.innerHTML = '<div class="loading">Loading...</div>';
   try {
     const res = await fetch('/api/matches/' + encodeURIComponent(tg.initData)); const data = await res.json();
-    const allMatches = [...aiMatchedProfiles.map(p => ({...p, isAI: true})), ...(data.matches || []).map(m => ({...m, isAI: false}))];
+    
+    // FIX: Load AI matches from LocalStorage so they don't disappear on refresh
+    let uid = tg.initDataUnsafe?.user?.id || 'guest';
+    let savedAIMatches = JSON.parse(localStorage.getItem('ai_matches_' + uid) || '[]');
+    
+    const allMatches = [...savedAIMatches.map(p => ({...p, isAI: true})), ...(data.matches || []).map(m => ({...m, isAI: false}))];
     if (allMatches.length === 0) { matchesList.innerHTML = '<div style="text-align:center;padding:60px 20px"><div style="font-size:70px;margin-bottom:20px">💔</div><div style="font-size:20px;font-weight:700;margin-bottom:10px">No matches yet</div><div style="font-size:15px;color:var(--text-secondary)">Keep swiping!</div></div>'; return; }
     matchesList.innerHTML = allMatches.map(m => {
       const gIdx = typeof m.user_id === 'string' ? m.user_id.split('_')[1] % gradients.length : m.user_id % gradients.length;
@@ -761,7 +733,7 @@ async function loadMatches() {
 function openChat(id, n) {
   currentChatPartner = {userId: id, name: n, isAI: false}; document.getElementById('matchesSection').classList.remove('show'); document.getElementById('chatSection').classList.add('show'); document.getElementById('navTabs').classList.remove('show');
   document.getElementById('chatAvatar').textContent = n.charAt(0).toUpperCase(); document.getElementById('chatAvatar').style.background = gradients[id % gradients.length]; document.getElementById('chatUserName').textContent = n;
-  document.getElementById('chatUserStatus').textContent = 'Online'; // Real match - no AI indicator
+  document.getElementById('chatUserStatus').textContent = 'Online'; 
   loadMessages(); startMessagePolling();
 }
 function openAIChat(id, n) {
@@ -805,13 +777,9 @@ async function sendRealMessage(t) {
   const userMsgDiv = document.createElement('div'); userMsgDiv.className = 'message sent';
   userMsgDiv.innerHTML = `<div>${escapeHtml(t)}</div><span class="message-time">${new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}</span>`;
   chatMessages.appendChild(userMsgDiv); document.getElementById('chatInput').value = ''; chatMessages.scrollTop = chatMessages.scrollHeight;
-  
-  // Show typing indicator (simulates the other person is typing)
   showTypingIndicator();
-  
   try {
     await fetch('/api/send_message', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({init_data: tg.initData, to_user: currentChatPartner.userId, message: t}) });
-    // Poll for new messages (AI will auto-reply in background)
     setTimeout(loadMessages, 2500);
     setTimeout(loadMessages, 4500);
   } catch (e) { hideTypingIndicator(); }
@@ -821,9 +789,10 @@ async function sendAIMessage(t) {
   chatMessages.appendChild(userMsgDiv); document.getElementById('chatInput').value = ''; chatMessages.scrollTop = chatMessages.scrollHeight;
   const typingDiv = document.createElement('div'); typingDiv.className = 'typing-indicator'; typingDiv.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>'; chatMessages.appendChild(typingDiv); chatMessages.scrollTop = chatMessages.scrollHeight;
   try {
+    // The backend will sleep for 1.5-3.5s to simulate real typing
     const res = await fetch('/api/ai_chat', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({init_data: tg.initData, ai_profile_id: currentChatPartner.userId, message: t}) });
     const data = await res.json(); typingDiv.remove();
-    if (data.ok) { await new Promise(r => setTimeout(r, 800)); const aiMsgDiv = document.createElement('div'); aiMsgDiv.className = 'message received'; aiMsgDiv.innerHTML = `<div>${escapeHtml(data.ai_response.text)}</div><span class="message-time">${new Date(data.ai_response.timestamp).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}</span>`; chatMessages.appendChild(aiMsgDiv); chatMessages.scrollTop = chatMessages.scrollHeight; }
+    if (data.ok) { await new Promise(r => setTimeout(r, 400)); const aiMsgDiv = document.createElement('div'); aiMsgDiv.className = 'message received'; aiMsgDiv.innerHTML = `<div>${escapeHtml(data.ai_response.text)}</div><span class="message-time">${new Date(data.ai_response.timestamp).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}</span>`; chatMessages.appendChild(aiMsgDiv); chatMessages.scrollTop = chatMessages.scrollHeight; }
   } catch (e) { typingDiv.remove(); }
 }
 function showTypingIndicator() {
@@ -876,7 +845,26 @@ function animateOut(action) {
   if (!activeCard) return; const card = activeCard; const dir = action === 'like' ? 1 : -1;
   card.style.transition = 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s'; card.style.transform = `translateX(${dir * 600}px) rotate(${dir * 30}deg)`; card.style.opacity = '0';
   const profile = profiles[currentIndex]; currentIndex++;
-  if (isAIMode) { setTimeout(() => { if (action === 'like') { aiMatchedProfiles.push(profile); lastMatchedAIProfile = profile; showAIMatch(profile); } renderCard(); }, 350); }
+  if (isAIMode) { 
+      setTimeout(() => { 
+          if (action === 'like') { 
+              aiMatchedProfiles.push(profile); 
+              
+              // FIX: Save AI Match to LocalStorage so it never disappears!
+              let uid = tg.initDataUnsafe?.user?.id || 'guest';
+              let saved = JSON.parse(localStorage.getItem('ai_matches_' + uid) || '[]');
+              // Avoid duplicates
+              if(!saved.find(p => p.user_id === profile.user_id)) {
+                  saved.push(profile);
+                  localStorage.setItem('ai_matches_' + uid, JSON.stringify(saved));
+              }
+              
+              lastMatchedAIProfile = profile; 
+              showAIMatch(profile); 
+          } 
+          renderCard(); 
+      }, 350); 
+  }
   else {
     const targetId = profile.user_id;
     setTimeout(async () => {
