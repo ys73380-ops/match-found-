@@ -112,7 +112,7 @@ HTML = r"""<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name
 </style></head><body>
 <div class="hd"><div class="av" id="hav"></div><div class="ui"><div class="un" id="hn">...</div><div class="us"><span class="od" id="od"></span><span id="hs">Online</span></div></div></div>
 <div class="mc" id="mc"></div>
-<div class="ic"><input id="mi" placeholder="Type a message..." maxlength="500" autocomplete="off"><button id="sb" onclick="send()">➤</button></div>
+<div class="ic"><input id="mi" placeholder="Type a message..." maxlength="500" autocomplete="off"><button id="sb">➤</button></div>
 <script>
 const tg=window.Telegram?.WebApp;if(tg){tg.ready();tg.expand();try{tg.setHeaderColor('#FF007A');tg.setBackgroundColor('#0A0A12');}catch(e){}}
 const P=new URLSearchParams(location.search),C={n:P.get('name')||'Sofia',a:P.get('age')||'22',ci:P.get('city')||'City',co:P.get('country')||'Country',fl:P.get('flag')||'🌍',ph:P.get('photo')||'',pt:P.get('ptype')||'face',sp:P.get('sp')||'',se:P.get('se')||'🌸',g:P.get('gender')||'female'};
@@ -120,7 +120,7 @@ document.title='Chat with '+C.n;const $=id=>document.getElementById(id);$('hn').
 let st='active',um=0,busy=false,us=false,h=[],ga=pG();const HK='wcv7_'+C.n,mc=$('mc'),inp=$('mi'),sb=$('sb');
 const CB=["hey sorry! I had to go suddenly 😅","sorry naa 🙈 my mom was calling me","I'm back! did you miss me? 😜","sorry, my phone died, just charged it 😅","hey I'm back, sorry for leaving suddenly 😊"];
 const RN=["hey you're back 😊","oh you came back, nice 😄","hey! I was just thinking about you 😊"],LS=['last seen just now','last seen 1 min ago','last seen recently'];
-const pk=a=>a[Math.floor(Math.random()*a.length)],pG=()=>{const r=Math.random();return r<.3?1:r<.6?2:r<.85?3+Math.floor(Math.random()*2):5+Math.floor(Math.random()*3)},dR=()=>Math.random()<.78;
+const pk=a=>a[Math.floor(Math.random()*a.length)],pG=()=>{const r=Math.random();return r<.3?3:r<.7?5:8},dR=()=>Math.random()<.78;
 const rD=()=>{const r=Math.random();return r<.35?12e3+Math.random()*18e3:r<.75?3e4+Math.random()*45e3:75e3+Math.random()*6e4};
 const esc=t=>{const d=document.createElement('div');d.textContent=t;return d.innerHTML},wt=ms=>new Promise(r=>setTimeout(r,ms)),nw=()=>new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),tD=t=>2500+Math.min((t||'').length*70,6000)+Math.random()*2500;
 function setS(t,o){$('hs').textContent=t;$('od').classList.toggle('off',!o)}function dI(){inp.disabled=true;sb.disabled=true}function eI(){inp.disabled=false;sb.disabled=false}
@@ -128,7 +128,7 @@ function sv(){try{localStorage.setItem(HK,JSON.stringify({m:h.slice(-60),s:st}))
 function ov(){if(C.pt!=='sticker')return '';if(C.sp)return '<img class="si" src="'+C.sp+'" onerror="this.outerHTML=\'<span class=st>'+C.se+'</span>\'">';return '<span class="st">'+C.se+'</span>'}
 function avH(){if(!C.ph)return '<div class="af">'+C.n[0].toUpperCase()+'</div>'+ov();return '<img src="'+C.ph+'" onerror="this.outerHTML=\'<div class=af>'+C.n[0].toUpperCase()+'</div>\'">'+ov()}
 $('hav').innerHTML=avH();mc.innerHTML='<div class="pc"><div class="ba">'+avH()+'</div><div class="pn">'+esc(C.n)+', '+esc(C.a)+'</div><div class="ps">📍 '+esc(C.ci)+', '+esc(C.co)+' '+C.fl+'</div></div>';
-function dom(m){const d=document.createElement('div');if(m.t==='sys'){d.className='sys';d.innerHTML=esc(m.x)+(m.b?'<br><button class="ncb" onclick="nC()">🔄 START NEW CHAT</button>':'');}else{d.className='msg '+m.t;d.innerHTML='<div>'+esc(m.x)+'</div><span class="mt">'+(m.tm||'')+'</span>';}mc.appendChild(d);mc.scrollTop=mc.scrollHeight;}
+function dom(m){const d=document.createElement('div');if(m.t==='sys'){d.className='sys';d.innerHTML=esc(m.x)+(m.b?'<br><button class="ncb">🔄 START NEW CHAT</button>':'');}else{d.className='msg '+m.t;d.innerHTML='<div>'+esc(m.x)+'</div><span class="mt">'+(m.tm||'')+'</span>';}mc.appendChild(d);mc.scrollTop=mc.scrollHeight;}
 function ap(t,ty){const m={t:ty,x:t,tm:nw()};dom(m);h.push(m);sv();}function aS(t,b){const m={t:'sys',x:t,b:!!b};dom(m);h.push(m);sv();}
 function sT(){const d=document.createElement('div');d.className='ti';d.id='ti';d.innerHTML='<div class="td"></div><div class="td"></div><div class="td"></div>';mc.appendChild(d);mc.scrollTop=mc.scrollHeight;}function hT(){const t=$('ti');if(t)t.remove();}
 function nC(){try{localStorage.removeItem(HK);}catch(e){}location.reload();}
@@ -159,7 +159,17 @@ async function send(){
   busy=false;if(st==='active')sb.disabled=false;
 }
 (function(){const ht=ld();if(ht&&ht.m&&ht.m.length){h=ht.m;h.forEach(dom);um=h.filter(m=>m.t==='s').length;if(ht.s==='ended'){st='ended';dI();setS(pk(LS),false);if(dR())sR(5e3+Math.random()*1e4);else sN(15e3+Math.random()*2e4);}else if(ht.s==='closed'){st='closed';dI();setS('offline',false);}else{st='active';setTimeout(async()=>{if(us&&um>0&&st==='active'){const l=pk(RN);sT();await wt(tD(l));hT();ap(l,'r');}},2500+Math.random()*2500);}}else{if(Math.random()<.85){setTimeout(async()=>{if(us)return;us=true;const f=pk(["heyy 👋","hii 😊","hey! finally someone matched me 😄","hellooo, how are you?"]);sT();await wt(tD(f));hT();ap(f,'r');},2500+Math.random()*5500);}}})();
-inp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();send();}});setTimeout(()=>{if(!inp.disabled)inp.focus();},400);
+
+// --- FIXED EVENT LISTENERS ---
+inp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();send();}});
+sb.addEventListener('click', send);
+sb.addEventListener('touchend', (e) => { e.preventDefault(); send(); }); // Mobile touch support
+mc.addEventListener('click', (e) => { // New Chat button delegation
+  if(e.target && e.target.classList.contains('ncb')){
+    nC();
+  }
+});
+setTimeout(()=>{if(!inp.disabled)inp.focus();},400);
 </script></body></html>"""
 
 if __name__ == "__main__":
