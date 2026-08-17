@@ -1,5 +1,3 @@
-"""Web App - FIXED: robust chat, state handling, API errors and UI events."""
-
 from __future__ import annotations
 
 import os
@@ -12,9 +10,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
 
-app = FastAPI(title="Chat Web App")
 
-# Wildcard origins + credentials=True is unnecessary and can cause browser CORS issues.
+app = FastAPI(title="Natural AI Chat")
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -24,187 +23,242 @@ app.add_middleware(
 )
 
 
+# =========================================================
+# AI RESPONSE BANK
+# Casual English around A2-B1 level.
+# The bot is intended to be presented as an AI.
+# =========================================================
+
 AI = {
+
     "GREETING": [
         "heyy 👋",
-        "hii! how's your day going?",
-        "hey! i was hoping someone nice would match me 😊",
-        "hellooo",
-        "hiii, how are you?",
+        "hii 😊 how are you?",
+        "hey, how's your day going?",
+        "helloo 😄",
+        "hii, nice to meet you",
     ],
 
     "HOW_R_U": [
         "i'm good 😊 what about you?",
-        "pretty fine, just got home. you?",
-        "a bit tired but i'm okay. how about you?",
-        "doing great now that you messaged 😊",
+        "pretty good, you?",
+        "i'm okay, just a little tired",
+        "doing good haha, what about you?",
+        "not bad 😊 how are you?",
     ],
 
     "DOING": [
-        "just watching netflix, wbu?",
-        "i was about to make coffee ☕ you?",
-        "nothing much, just bored scrolling 😅",
-        "just got back from work, so tired",
-        "eating something rn, are you hungry too? lol",
+        "just chilling rn, what about you?",
+        "nothing much, just using my phone",
+        "i was watching something haha",
+        "just relaxing a bit",
+        "not doing much right now, you?",
     ],
 
     "NAME": [
-        "i'm {name} 😊 what's your name?",
-        "my name is {name}, and yours?",
-        "{name} here 😄 you?",
+        "my name is {name}, what's yours?",
+        "i'm {name} 😊 and you?",
+        "{name} here haha, what should i call you?",
     ],
 
     "AGE": [
-        "i'm {age} 😊",
-        "{age}! you?",
-        "haha i'm {age}, don't tell anyone 😜",
+        "i'm {age} 😊 how old are you?",
+        "{age} haha, and you?",
+        "i'm {age}, what about you?",
     ],
 
     "LOCATION": [
-        "i'm from {city}, {country} {flag} you?",
+        "i'm from {city}, {country} {flag}. what about you?",
         "i live in {city} 😊 where are you from?",
-        "{city} {flag} it's nice here. you tell me yours",
-        "i live alone here, it's peaceful 😊 you?",
+        "{city} {flag}, you?",
+        "i'm in {city}. it's nice here haha",
     ],
 
     "HOBBIES": [
-        "i love music and long drives 🎵 what do you like?",
-        "mostly cooking and movies 😊 you?",
-        "i like going for coffee with friends ☕ wbu?",
-        "photography and travelling ✈️ you?",
+        "i like music and movies mostly, what about you?",
+        "i like cooking sometimes and watching movies 😊",
+        "mostly music, games and going out with friends",
+        "i like travelling when i get time",
     ],
 
     "COMPLIMENT": [
-        "aww stop it 😊 you're sweet too",
-        "haha you're making me blush 🙈",
-        "that's so nice of you to say 🥰",
-        "aww thanks 😊 nobody says that to me",
+        "haha thank you 😊",
+        "aww that's sweet",
+        "thank youu 😄",
+        "haha you're nice",
+        "that's really nice of you",
     ],
 
-    "COMPLIMENT_m": [
-        "haha thanks 😊 you're cool too",
-        "aww thanks, that's sweet of you",
-        "lol thanks 😄",
+    "COMPLIMENT_M": [
+        "haha thanks bro 😄",
+        "thanks, that's nice of you",
+        "haha thank you",
     ],
 
     "FLIRT": [
-        "haha slow down 😏 let's get to know each other first",
-        "you're smooth lol 😂",
-        "careful, i might actually believe you 😜",
-        "hmm maybe 😊 buy me coffee first ☕",
+        "haha you're moving fast 😄",
+        "slow down a little, we just met",
+        "you're funny haha",
+        "maybe, let's talk first 😊",
+        "haha we should get to know each other first",
     ],
 
-    "FLIRT_m": [
-        "haha you're funny 😂 let's talk a bit first",
-        "you're cute, but let's talk a bit first 😊",
-        "haha i'm a shy guy lol",
+    "FLIRT_M": [
+        "haha you're funny 😄",
+        "slow down bro, we just met",
+        "let's talk first haha",
+        "you're nice, i like your vibe",
     ],
 
     "LOVE": [
-        "we just met! let's take it slow 😊",
-        "let's be friends first, then we'll see 😊",
-        "haha that's sweet, but let's get to know each other first 😊",
+        "haha that's a bit fast 😄",
+        "we just met, let's talk more first",
+        "that's sweet, but let's take it slow",
+        "haha you don't even know me yet",
     ],
 
-    "LOVE_m": [
-        "haha slow down 😅 let's get to know each other first",
-        "i'm actually single but let's take it slow 😊",
+    "LOVE_M": [
+        "haha slow down 😄",
+        "we just met, let's talk first",
+        "that's sweet, but let's take it easy",
     ],
 
     "SORRY": [
-        "aww it's okay 😊",
-        "sorry naaa 🥺 don't be mad... promise i'll talk properly now! 🌸",
-        "it's fine, don't worry about it 😊",
+        "it's okay 😊",
+        "no problem, don't worry",
+        "haha it's fine",
+        "don't worry about it",
     ],
 
     "EXCUSE": [
-        "oh sorry! my mom was calling me, I had to go 😅",
-        "sorry naa 🙈 my phone died, just came back",
-        "I had some urgent work, sorry 😊 what were you saying?",
-        "haha life happened 😅 sorry, I'm here now",
-        "my internet was gone, sorry 😅 ab batao",
+        "sorry, i was away for a bit",
+        "my phone was busy, i'm back now 😅",
+        "i got distracted for a while haha",
+        "sorry, had to do something",
+        "i wasn't here for a bit, what happened?",
     ],
 
     "QUESTION": [
-        "hmm good question 🤔 i'd say yes haha. what do you think?",
-        "i think so, not sure though. you?",
-        "honestly i never thought about it 😅 you tell me first",
+        "hmm i think so haha, what do you think?",
+        "maybe, i'm not really sure 😅",
+        "i think yes, probably",
+        "not sure about that, what do you think?",
+        "good question haha",
     ],
 
     "FOOD": [
-        "i love pizza and pasta 🍕 what about you?",
-        "i'm a big foodie, i love trying new cafes 😊",
-        "i can eat junk food all day haha",
+        "i like pizza and pasta 🍕",
+        "i love burgers too haha",
+        "i'm a big foodie 😄",
+        "probably pizza, easy answer haha",
+        "i like trying new food",
     ],
 
     "WORK": [
-        "i work in a private company, it's okay i guess. you?",
-        "i'm studying right now. what do you do?",
-        "work is so tiring these days 😅 what about you?",
+        "i'm studying right now",
+        "i work a little and study too",
+        "work is kinda tiring these days haha",
+        "i'm still figuring out what i want to do",
+        "mostly study and regular stuff",
     ],
 
     "SHORT_MSG": [
-        "hmm and? 😊",
+        "hmm 😊",
         "lol",
-        "nice! tell me more",
-        "oh really? 😄",
-        "haha true",
+        "haha okay",
+        "nice 😄",
+        "really?",
+        "ohh okay",
+        "and then?",
     ],
 
     "EMOJI_ONLY": [
         "😂",
-        "haha cute",
+        "haha",
+        "cute 😄",
         "🥰",
-        "your emoji game is strong lol",
+        "lol 😂",
+        "haha nice",
     ],
 
     "DEFAULT": [
-        "haha that's interesting, tell me more 😊",
-        "oh nice! so what do you do for fun?",
-        "i was just thinking the same thing lol",
-        "you seem nice, most people here are weird 😅",
-        "hmm i like that. btw where are you from?",
-        "lol true. how's your day going?",
-        "that's cool! i'm actually bored right now, entertain me 😜",
+        "haha that's interesting",
+        "oh really? tell me more",
+        "i get what you mean",
+        "hmm maybe you're right",
+        "that's nice 😊",
+        "haha true",
+        "i never thought about it like that",
+        "sounds good to me",
+        "ohh okay, and then?",
+        "yeah, i understand",
     ],
 }
 
 
-def safe_format(template: str, profile: Dict[str, Any]) -> str:
-    try:
-        return template.format(
-            name=str(profile.get("name", "Friend")),
-            age=int(profile.get("age", 22)),
-            city=str(profile.get("city", "City")),
-            country=str(profile.get("country", "Country")),
-            flag=str(profile.get("flag", "🌍")),
-        )
-    except Exception:
-        return template
+# =========================================================
+# RESPONSE STYLE
+# =========================================================
+
+def vary_punctuation(text: str) -> str:
+    """
+    Small punctuation variation for casual writing.
+    This keeps responses natural without trying to impersonate
+    a real person.
+    """
+
+    if not text:
+        return text
+
+    r = random.random()
+
+    # Keep some replies exactly as they are
+    if r < 0.45:
+        return text
+
+    # Remove final period sometimes
+    if r < 0.65:
+        text = re.sub(r"\.$", "", text)
+
+    # Casual lower-case continuation
+    if r < 0.82 and len(text) > 12:
+        text = text.replace(". ", ", ")
+
+    return text
 
 
-def get_ai(text: str, gender: str, profile: Dict[str, Any]) -> str:
+def get_ai(
+    text: str,
+    gender: str,
+    profile: Dict[str, Any],
+) -> str:
+
     try:
         m = (text or "").lower().strip()
         g = (gender or "female").lower().strip()
 
-        if re.fullmatch(
+        emoji_only = re.fullmatch(
             r"[\U0001F300-\U0001FAFF\u2600-\u27BF\uFE0F\s]+",
             text or "",
-        ):
+        )
+
+        if emoji_only:
             intent = "EMOJI_ONLY"
 
         elif len(m) < 5:
             intent = "SHORT_MSG"
 
         elif re.search(
-            r"(why did you (leave|go)|where were you|you left|ghost|"
-            r"kahan thi|wapas|came back|phone died)",
+            r"(why did you (leave|go)|where were you|you left|"
+            r"ghost|kahan thi|wapas|came back|phone died)",
             m,
         ):
             intent = "EXCUSE"
 
-        elif re.search(r"\b(sorry|gussa|angry|mad)\b", m):
+        elif re.search(
+            r"\b(sorry|gussa|angry|mad)\b",
+            m,
+        ):
             intent = "SORRY"
 
         elif re.search(
@@ -214,7 +268,7 @@ def get_ai(text: str, gender: str, profile: Dict[str, Any]) -> str:
             intent = "GREETING"
 
         elif re.search(
-            r"(how are you|how r u|kaise ho)",
+            r"(how are you|how r u|how are u|kaise ho)",
             m,
         ):
             intent = "HOW_R_U"
@@ -250,14 +304,13 @@ def get_ai(text: str, gender: str, profile: Dict[str, Any]) -> str:
             intent = "HOBBIES"
 
         elif re.search(
-            r"(love you|i love|marry|meet you|miss you|sexy|hot|date)",
+            r"(love you|i love|marry|meet you|miss you|date|sexy|hot)",
             m,
         ):
-            intent = (
-                "LOVE"
-                if re.search(r"\b(love you|i love)\b", m)
-                else "FLIRT"
-            )
+            if re.search(r"\b(love you|i love)\b", m):
+                intent = "LOVE"
+            else:
+                intent = "FLIRT"
 
         elif re.search(
             r"(beautiful|cute|pretty|gorgeous|handsome|sweet|nice)",
@@ -266,42 +319,76 @@ def get_ai(text: str, gender: str, profile: Dict[str, Any]) -> str:
             intent = "COMPLIMENT"
 
         elif re.search(
-            r"(food|eat|hungry|pizza|dinner)",
+            r"(food|eat|hungry|pizza|dinner|lunch|breakfast)",
             m,
         ):
             intent = "FOOD"
 
         elif re.search(
-            r"(work|job|study|college)",
+            r"(work|job|study|college|school)",
             m,
         ):
             intent = "WORK"
 
-        elif "?" in m or re.search(
-            r"\b(why|how|what|when|where|do you)\b",
-            m,
+        elif (
+            "?" in m
+            or re.search(
+                r"\b(why|how|what|when|where|do you)\b",
+                m,
+            )
         ):
             intent = "QUESTION"
 
         else:
             intent = "DEFAULT"
 
-        if g == "male" and intent in {"COMPLIMENT", "FLIRT", "LOVE"}:
-            key = f"{intent}_m"
+        if g == "male":
+            if intent == "COMPLIMENT":
+                key = "COMPLIMENT_M"
+            elif intent == "FLIRT":
+                key = "FLIRT_M"
+            elif intent == "LOVE":
+                key = "LOVE_M"
+            else:
+                key = intent
         else:
             key = intent
 
-        choices = AI.get(key) or AI["DEFAULT"]
-        result = random.choice(choices)
+        choices = AI.get(
+            key,
+            AI["DEFAULT"],
+        )
 
-        return safe_format(result, profile)
+        reply = random.choice(choices)
+
+        try:
+            reply = reply.format(
+                name=str(profile.get("name", "Friend")),
+                age=int(profile.get("age", 22)),
+                city=str(profile.get("city", "City")),
+                country=str(profile.get("country", "Country")),
+                flag=str(profile.get("flag", "🌍")),
+            )
+        except Exception:
+            pass
+
+        return vary_punctuation(reply)
 
     except Exception:
         return "haha 😊"
 
 
+# =========================================================
+# REQUEST MODEL
+# =========================================================
+
 class ChatRequest(BaseModel):
-    message: str = Field(default="", max_length=500)
+
+    message: str = Field(
+        default="",
+        max_length=500,
+    )
+
     gender: str = "female"
     name: str = "Friend"
     age: int = 22
@@ -310,12 +397,20 @@ class ChatRequest(BaseModel):
     flag: str = "🌍"
 
 
+# =========================================================
+# API
+# =========================================================
+
 @app.post("/api/chat")
 async def api_chat(request: ChatRequest):
-    try:
-        message = (request.message or "").strip()[:500]
 
-        if not message:
+    try:
+
+        text = (
+            request.message or ""
+        ).strip()[:500]
+
+        if not text:
             return {
                 "ok": True,
                 "reply": "haha 😊",
@@ -330,7 +425,7 @@ async def api_chat(request: ChatRequest):
         }
 
         reply = get_ai(
-            message,
+            text,
             request.gender,
             profile,
         )
@@ -341,6 +436,7 @@ async def api_chat(request: ChatRequest):
         }
 
     except Exception:
+
         return {
             "ok": False,
             "reply": "haha 😊",
@@ -360,21 +456,32 @@ async def home():
     return HTMLResponse(HTML)
 
 
-HTML = r"""<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport"
-      content="width=device-width,
-               initial-scale=1.0,
-               maximum-scale=1.0,
-               user-scalable=no">
+# =========================================================
+# HTML
+# =========================================================
 
-<title>Chat</title>
+HTML = r"""
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width,
+             initial-scale=1.0,
+             maximum-scale=1.0,
+             user-scalable=no"
+>
+
+<title>AI Chat</title>
 
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <style>
+
 *{
     margin:0;
     padding:0;
@@ -428,25 +535,6 @@ body{
     justify-content:center;
     font-size:24px;
     font-weight:700
-}
-
-.si{
-    position:absolute;
-    left:50%;
-    top:42%;
-    width:62%;
-    transform:translate(-50%,-50%);
-    pointer-events:none;
-    filter:drop-shadow(0 2px 6px rgba(0,0,0,.4))
-}
-
-.st{
-    position:absolute;
-    left:50%;
-    top:42%;
-    transform:translate(-50%,-50%);
-    font-size:32px;
-    pointer-events:none
 }
 
 .ui{
@@ -508,10 +596,6 @@ body{
     margin:0 auto 10px
 }
 
-.ba .st{
-    font-size:56px
-}
-
 .pn{
     font-size:18px;
     font-weight:700
@@ -529,12 +613,16 @@ body{
     border-radius:18px;
     font-size:15px;
     line-height:1.4;
-    animation:fi .3s ease
+    animation:fi .25s ease
 }
 
 .msg.s{
     align-self:flex-end;
-    background:linear-gradient(135deg,#FF007A,#7928CA);
+    background:linear-gradient(
+        135deg,
+        #FF007A,
+        #7928CA
+    );
     border-bottom-right-radius:4px
 }
 
@@ -569,7 +657,11 @@ body{
     padding:9px 18px;
     border:none;
     border-radius:12px;
-    background:linear-gradient(135deg,#FF007A,#7928CA);
+    background:linear-gradient(
+        135deg,
+        #FF007A,
+        #7928CA
+    );
     color:#fff;
     font-weight:700;
     font-size:12px;
@@ -622,11 +714,7 @@ body{
 }
 
 .ic input:focus{
-    border-color:rgba(255,0,122,.6)
-}
-
-.ic input:disabled{
-    opacity:.4
+    border-color:rgba(255,0,122,.55)
 }
 
 .ic button{
@@ -635,21 +723,20 @@ body{
     flex-shrink:0;
     border-radius:50%;
     border:none;
-    background:linear-gradient(135deg,#FF007A,#7928CA);
+    background:linear-gradient(
+        135deg,
+        #FF007A,
+        #7928CA
+    );
     color:#fff;
     font-size:19px;
     cursor:pointer
 }
 
-.ic button:disabled{
-    opacity:.5;
-    cursor:not-allowed
-}
-
 @keyframes fi{
     from{
         opacity:0;
-        transform:translateY(10px)
+        transform:translateY(8px)
     }
     to{
         opacity:1;
@@ -666,27 +753,50 @@ body{
         transform:translateY(-8px)
     }
 }
+
 </style>
+
 </head>
 
 <body>
 
+
 <div class="hd">
+
     <div class="av" id="hav"></div>
 
     <div class="ui">
-        <div class="un" id="hn">...</div>
+
+        <div class="un" id="hn">
+            ...
+        </div>
 
         <div class="us">
-            <span class="od" id="od"></span>
-            <span id="hs">Online</span>
+
+            <span
+                class="od"
+                id="od"
+            ></span>
+
+            <span id="hs">
+                Online
+            </span>
+
         </div>
+
     </div>
+
 </div>
 
-<div class="mc" id="mc"></div>
+
+<div
+    class="mc"
+    id="mc"
+></div>
+
 
 <div class="ic">
+
     <input
         id="mi"
         placeholder="Type a message..."
@@ -695,311 +805,368 @@ body{
         enterkeyhint="send"
     >
 
-    <button id="sb" type="button">➤</button>
+    <button
+        id="sb"
+        type="button"
+    >
+        ➤
+    </button>
+
 </div>
 
 
 <script>
-'use strict';
+
+"use strict";
+
+
+/* =========================================================
+   TELEGRAM
+========================================================= */
 
 const tg = window.Telegram?.WebApp;
 
 if (tg) {
+
     try {
+
         tg.ready();
         tg.expand();
-        tg.setHeaderColor('#FF007A');
-        tg.setBackgroundColor('#0A0A12');
-    } catch (e) {
-        console.warn('Telegram WebApp setup failed:', e);
-    }
+
+        tg.setHeaderColor("#FF007A");
+        tg.setBackgroundColor("#0A0A12");
+
+    } catch(e) {}
+
 }
 
 
-/* ---------------------------------------------------------
-   Helpers
---------------------------------------------------------- */
+/* =========================================================
+   PARAMS
+========================================================= */
 
-const $ = (id) => document.getElementById(id);
+const P = new URLSearchParams(
+    location.search
+);
 
-const pk = (arr) => {
-    if (!Array.isArray(arr) || !arr.length) return '';
-    return arr[Math.floor(Math.random() * arr.length)];
-};
-
-const pG = () => {
-    const r = Math.random();
-
-    if (r < 0.3) return 3;
-    if (r < 0.7) return 5;
-    return 8;
-};
-
-const dR = () => Math.random() < 0.78;
-
-const rD = () => {
-    const r = Math.random();
-
-    if (r < 0.35) {
-        return 12000 + Math.random() * 18000;
-    }
-
-    if (r < 0.75) {
-        return 30000 + Math.random() * 45000;
-    }
-
-    return 75000 + Math.random() * 60000;
-};
-
-const wt = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-
-const nw = () => new Date().toLocaleTimeString([], {
-    hour: '2-digit',
-    minute: '2-digit'
-});
-
-const tD = (text) => {
-    return (
-        2500 +
-        Math.min((text || '').length * 70, 6000) +
-        Math.random() * 2500
-    );
-};
-
-const esc = (text) => {
-    const div = document.createElement('div');
-    div.textContent = String(text ?? '');
-    return div.innerHTML;
-};
-
-const escAttr = (text) => {
-    return esc(text)
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
-};
-
-
-/* ---------------------------------------------------------
-   Profile
---------------------------------------------------------- */
-
-const P = new URLSearchParams(location.search);
 
 const C = {
-    n: P.get('name') || 'Sofia',
-    a: P.get('age') || '22',
-    ci: P.get('city') || 'City',
-    co: P.get('country') || 'Country',
-    fl: P.get('flag') || '🌍',
-    ph: P.get('photo') || '',
-    pt: P.get('ptype') || 'face',
-    sp: P.get('sp') || '',
-    se: P.get('se') || '🌸',
-    g: (P.get('gender') || 'female').toLowerCase()
+
+    n:
+        P.get("name") ||
+        "Sofia",
+
+    a:
+        P.get("age") ||
+        "22",
+
+    ci:
+        P.get("city") ||
+        "City",
+
+    co:
+        P.get("country") ||
+        "Country",
+
+    fl:
+        P.get("flag") ||
+        "🌍",
+
+    ph:
+        P.get("photo") ||
+        "",
+
+    pt:
+        P.get("ptype") ||
+        "face",
+
+    sp:
+        P.get("sp") ||
+        "",
+
+    se:
+        P.get("se") ||
+        "🌸",
+
+    g:
+        (
+            P.get("gender") ||
+            "female"
+        ).toLowerCase()
+
 };
 
 
-/* ---------------------------------------------------------
+document.title =
+    "AI Chat with " +
+    C.n;
+
+
+/* =========================================================
    DOM
---------------------------------------------------------- */
+========================================================= */
 
-const mc = $('mc');
-const inp = $('mi');
-const sb = $('sb');
+const mc = document.getElementById("mc");
+const inp = document.getElementById("mi");
+const sb = document.getElementById("sb");
 
-document.title = 'Chat with ' + C.n;
-$('hn').textContent = `${C.n}, ${C.a}`;
-
-
-/* ---------------------------------------------------------
-   State
---------------------------------------------------------- */
-
-let st = 'active';
-let um = 0;
-let busy = false;
-let us = false;
-let h = [];
-let ga = pG();
+const hs = document.getElementById("hs");
+const od = document.getElementById("od");
 
 
-/*
-   Old version used only the name as localStorage key.
+/* =========================================================
+   STATE
+========================================================= */
 
-   Problem:
-   Two different profiles with same name could share
-   the same chat history.
+let state = "active";
 
-   Now profile-specific key is used.
-*/
-const HK = [
-    'chat_v3',
-    C.n,
-    C.a,
-    C.ci,
-    C.co,
-    C.g,
-    C.ph
-].map(v => encodeURIComponent(String(v))).join('_');
+let messageHistory = [];
+
+let sendQueue = [];
+
+let queueRunning = false;
+
+let unavailableTimer = null;
+
+let replyTimer = null;
 
 
-const CB = [
-    "hey sorry! I had to go suddenly 😅",
-    "sorry naa 🙈 my mom was calling me",
-    "I'm back! did you miss me? 😜",
-    "sorry, my phone died, just charged it 😅",
-    "hey I'm back, sorry for leaving suddenly 😊"
-];
+/* =========================================================
+   HELPERS
+========================================================= */
 
-const RN = [
-    "hey you're back 😊",
-    "oh you came back, nice 😄",
-    "hey! I was just thinking about you 😊"
-];
-
-const LS = [
-    'last seen just now',
-    'last seen 1 min ago',
-    'last seen recently'
-];
+const wait = ms =>
+    new Promise(resolve =>
+        setTimeout(resolve,ms)
+    );
 
 
-/* ---------------------------------------------------------
-   Telegram status
---------------------------------------------------------- */
+const random = arr => {
 
-function setS(text, online) {
-    $('hs').textContent = text;
-    $('od').classList.toggle('off', !online);
-}
-
-
-/* ---------------------------------------------------------
-   Input controls
---------------------------------------------------------- */
-
-function disableInput() {
-    inp.disabled = true;
-    sb.disabled = true;
-}
-
-function enableInput() {
-    if (st !== 'active') return;
-
-    inp.disabled = false;
-    sb.disabled = false;
-}
-
-
-/* ---------------------------------------------------------
-   Local storage
---------------------------------------------------------- */
-
-function sv() {
-    try {
-        localStorage.setItem(
-            HK,
-            JSON.stringify({
-                version: 3,
-                m: h.slice(-80),
-                s: st
-            })
-        );
-    } catch (e) {
-        console.warn('localStorage save failed:', e);
+    if (!arr.length) {
+        return "";
     }
+
+    return arr[
+        Math.floor(
+            Math.random() *
+            arr.length
+        )
+    ];
+
+};
+
+
+const esc = text => {
+
+    const d =
+        document.createElement("div");
+
+    d.textContent =
+        String(text ?? "");
+
+    return d.innerHTML;
+
+};
+
+
+const randomDelay = () => {
+
+    const r = Math.random();
+
+    if (r < 0.25) {
+        return 500 + Math.random() * 900;
+    }
+
+    if (r < 0.60) {
+        return 1200 + Math.random() * 1800;
+    }
+
+    if (r < 0.90) {
+        return 2500 + Math.random() * 4000;
+    }
+
+    return 5000 + Math.random() * 8000;
+
+};
+
+
+const typingDelay = text => {
+
+    return (
+        900 +
+        Math.min(
+            String(text || "").length * 45,
+            4000
+        ) +
+        Math.random() * 1800
+    );
+
+};
+
+
+/* =========================================================
+   LOCAL STORAGE
+========================================================= */
+
+const CHAT_KEY = [
+
+    "natural_ai_chat",
+
+    encodeURIComponent(C.n),
+
+    encodeURIComponent(C.a),
+
+    encodeURIComponent(C.ci),
+
+    encodeURIComponent(C.co),
+
+    encodeURIComponent(C.g),
+
+].join("_");
+
+
+function saveChat(){
+
+    try {
+
+        localStorage.setItem(
+
+            CHAT_KEY,
+
+            JSON.stringify({
+
+                v:2,
+
+                state,
+
+                messages:
+                    messageHistory.slice(-100)
+
+            })
+
+        );
+
+    } catch(e) {
+
+        console.warn(
+            "save failed",
+            e
+        );
+
+    }
+
 }
 
-function ld() {
+
+function loadChat(){
+
     try {
-        const raw = localStorage.getItem(HK);
+
+        const raw =
+            localStorage.getItem(
+                CHAT_KEY
+            );
 
         if (!raw) {
             return null;
         }
 
-        const parsed = JSON.parse(raw);
+        const data =
+            JSON.parse(raw);
 
         if (
-            !parsed ||
-            typeof parsed !== 'object' ||
-            !Array.isArray(parsed.m)
+            !data ||
+            !Array.isArray(
+                data.messages
+            )
         ) {
             return null;
         }
 
-        return parsed;
+        return data;
 
-    } catch (e) {
-        console.warn('localStorage read failed:', e);
+    } catch(e) {
 
         try {
-            localStorage.removeItem(HK);
-        } catch (_) {}
+
+            localStorage.removeItem(
+                CHAT_KEY
+            );
+
+        } catch(_) {}
 
         return null;
+
     }
+
 }
 
 
-/* ---------------------------------------------------------
-   Avatar HTML
---------------------------------------------------------- */
+/* =========================================================
+   PROFILE
+========================================================= */
 
-function ov() {
-    if (C.pt !== 'sticker') {
-        return '';
-    }
+function avatarHTML(){
 
-    if (C.sp) {
-        return `
+    let inside = "";
+
+    if (C.ph) {
+
+        inside += `
             <img
-                class="si"
-                src="${escAttr(C.sp)}"
+                src="${esc(C.ph)}"
                 alt=""
-                onerror="this.outerHTML='<span class=&quot;st&quot;>${esc(C.se)}</span>'"
+                onerror="
+                    this.outerHTML =
+                    '<div class=&quot;af&quot;>
+                    ${esc(
+                        (C.n || "F")
+                        .charAt(0)
+                        .toUpperCase()
+                    )}
+                    </div>'
+                "
             >
         `;
-    }
 
-    return `<span class="st">${esc(C.se)}</span>`;
-}
+    } else {
 
-
-function initials() {
-    return esc((C.n || 'F').trim().charAt(0).toUpperCase() || 'F');
-}
-
-
-function avH() {
-    if (!C.ph) {
-        return `
-            <div class="af">${initials()}</div>
-            ${ov()}
+        inside += `
+            <div class="af">
+                ${esc(
+                    (C.n || "F")
+                    .charAt(0)
+                    .toUpperCase()
+                )}
+            </div>
         `;
+
     }
 
-    return `
-        <img
-            src="${escAttr(C.ph)}"
-            alt=""
-            onerror="this.outerHTML='<div class=&quot;af&quot;>${initials()}</div>'"
-        >
-        ${ov()}
-    `;
+    return inside;
+
 }
 
 
-/* ---------------------------------------------------------
-   Initial profile card
---------------------------------------------------------- */
+document.getElementById(
+    "hav"
+).innerHTML =
+    avatarHTML();
 
-$('hav').innerHTML = avH();
+
+document.getElementById(
+    "hn"
+).textContent =
+    C.n + ", " + C.a;
+
 
 mc.innerHTML = `
+
     <div class="pc">
+
         <div class="ba">
-            ${avH()}
+            ${avatarHTML()}
         </div>
 
         <div class="pn">
@@ -1007,703 +1174,1032 @@ mc.innerHTML = `
         </div>
 
         <div class="ps">
-            📍 ${esc(C.ci)}, ${esc(C.co)} ${esc(C.fl)}
+            📍 ${esc(C.ci)},
+            ${esc(C.co)}
+            ${esc(C.fl)}
         </div>
+
     </div>
 `;
 
 
-/* ---------------------------------------------------------
-   Render messages
---------------------------------------------------------- */
+/* =========================================================
+   STATUS
+========================================================= */
 
-function dom(m) {
-    if (!m || typeof m !== 'object') {
+function setStatus(
+    text,
+    online = true
+){
+
+    hs.textContent = text;
+
+    od.classList.toggle(
+        "off",
+        !online
+    );
+
+}
+
+
+/* =========================================================
+   MESSAGE RENDER
+========================================================= */
+
+function renderMessage(m){
+
+    if (!m) {
         return;
     }
 
-    const d = document.createElement('div');
+    const d =
+        document.createElement("div");
 
-    if (m.t === 'sys') {
-        d.className = 'sys';
 
-        const text = document.createTextNode(
-            String(m.x || '')
-        );
+    if (m.type === "system") {
 
-        d.appendChild(text);
+        d.className =
+            "sys";
 
-        if (m.b) {
-            d.appendChild(document.createElement('br'));
-
-            const button = document.createElement('button');
-
-            button.className = 'ncb';
-            button.type = 'button';
-            button.textContent = '🔄 START NEW CHAT';
-
-            d.appendChild(button);
-        }
+        d.textContent =
+            m.text || "";
 
     } else {
 
-        const type =
-            m.t === 's'
-                ? 's'
-                : 'r';
+        d.className =
+            "msg " +
+            (
+                m.type === "sent"
+                    ? "s"
+                    : "r"
+            );
 
-        d.className = `msg ${type}`;
 
-        const text = document.createElement('div');
+        const text =
+            document.createElement(
+                "div"
+            );
 
-        text.textContent = String(m.x || '');
+        text.textContent =
+            m.text || "";
 
-        const time = document.createElement('span');
 
-        time.className = 'mt';
-        time.textContent = m.tm || '';
+        const time =
+            document.createElement(
+                "span"
+            );
+
+        time.className =
+            "mt";
+
+        time.textContent =
+            m.time || "";
+
 
         d.appendChild(text);
+
         d.appendChild(time);
+
     }
+
 
     mc.appendChild(d);
 
-    mc.scrollTop = mc.scrollHeight;
+    mc.scrollTop =
+        mc.scrollHeight;
+
 }
 
 
-/* ---------------------------------------------------------
-   Add message
---------------------------------------------------------- */
+function addMessage(
+    text,
+    type
+){
 
-function ap(text, type) {
-    const m = {
-        t: type,
-        x: String(text || ''),
-        tm: nw()
+    const message = {
+
+        type,
+
+        text:
+            String(text || ""),
+
+        time:
+            new Date()
+            .toLocaleTimeString(
+                [],
+                {
+                    hour:"2-digit",
+                    minute:"2-digit"
+                }
+            )
+
     };
 
-    dom(m);
-    h.push(m);
-    sv();
+
+    renderMessage(
+        message
+    );
+
+
+    messageHistory.push(
+        message
+    );
+
+
+    saveChat();
+
 }
 
 
-function aS(text, button = false) {
-    const m = {
-        t: 'sys',
-        x: String(text || ''),
-        b: Boolean(button)
-    };
+/* =========================================================
+   SYSTEM MESSAGE
+========================================================= */
 
-    dom(m);
-    h.push(m);
-    sv();
+function addSystem(
+    text,
+    newChat = false
+){
+
+    const d =
+        document.createElement(
+            "div"
+        );
+
+    d.className =
+        "sys";
+
+
+    d.textContent =
+        text;
+
+
+    if (newChat) {
+
+        const br =
+            document.createElement(
+                "br"
+            );
+
+
+        const btn =
+            document.createElement(
+                "button"
+            );
+
+
+        btn.className =
+            "ncb";
+
+        btn.type =
+            "button";
+
+        btn.textContent =
+            "🔄 START NEW CHAT";
+
+
+        d.appendChild(br);
+
+        d.appendChild(btn);
+
+    }
+
+
+    mc.appendChild(d);
+
+    mc.scrollTop =
+        mc.scrollHeight;
+
+
+    messageHistory.push({
+
+        type:"system",
+
+        text,
+
+        time:""
+
+    });
+
+
+    saveChat();
+
 }
 
 
-/* ---------------------------------------------------------
-   Typing indicator
---------------------------------------------------------- */
+/* =========================================================
+   TYPING INDICATOR
+========================================================= */
 
-function sT() {
-    hT();
+function showTyping(){
 
-    const d = document.createElement('div');
+    hideTyping();
 
-    d.className = 'ti';
-    d.id = 'ti';
+
+    const d =
+        document.createElement(
+            "div"
+        );
+
+
+    d.id = "typing";
+
+    d.className =
+        "ti";
+
 
     d.innerHTML = `
+
         <div class="td"></div>
         <div class="td"></div>
         <div class="td"></div>
+
     `;
+
 
     mc.appendChild(d);
 
-    mc.scrollTop = mc.scrollHeight;
+    mc.scrollTop =
+        mc.scrollHeight;
+
 }
 
 
-function hT() {
-    const t = $('ti');
+function hideTyping(){
 
-    if (t) {
-        t.remove();
-    }
-}
+    const d =
+        document.getElementById(
+            "typing"
+        );
 
-
-/* ---------------------------------------------------------
-   New chat
---------------------------------------------------------- */
-
-function nC() {
-    try {
-        localStorage.removeItem(HK);
-    } catch (e) {
-        console.warn('Failed to remove chat:', e);
+    if (d) {
+        d.remove();
     }
 
-    location.reload();
 }
 
 
-/* ---------------------------------------------------------
+/* =========================================================
    API
---------------------------------------------------------- */
+========================================================= */
 
-async function api(text) {
+async function askAI(
+    text
+){
 
-    const controller = new AbortController();
+    const controller =
+        new AbortController();
 
-    const timeoutId = setTimeout(() => {
-        controller.abort();
-    }, 15000);
+
+    const timeout =
+        setTimeout(
+            () =>
+                controller.abort(),
+            15000
+        );
+
 
     try {
 
-        const response = await fetch('/api/chat', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify({
-                message: String(text || '').slice(0, 500),
-                gender: C.g,
-                name: C.n,
-                age: Number(C.a) || 22,
-                city: C.ci,
-                country: C.co,
-                flag: C.fl
-            }),
-            signal: controller.signal
-        });
+        const response =
+            await fetch(
+                "/api/chat",
+                {
+
+                    method:"POST",
+
+                    headers:{
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body:
+                        JSON.stringify({
+
+                            message:text,
+
+                            gender:C.g,
+
+                            name:C.n,
+
+                            age:
+                                Number(C.a) ||
+                                22,
+
+                            city:C.ci,
+
+                            country:C.co,
+
+                            flag:C.fl
+
+                        }),
+
+                    signal:
+                        controller.signal
+
+                }
+            );
+
 
         if (!response.ok) {
-            return 'haha 😊';
+
+            return "hmm give me a sec 😅";
+
         }
 
-        const data = await response.json();
+
+        const data =
+            await response.json();
+
 
         if (
             data &&
             data.ok &&
-            typeof data.reply === 'string' &&
-            data.reply.trim()
+            data.reply
         ) {
-            return data.reply.trim();
+
+            return String(
+                data.reply
+            ).trim();
+
         }
 
-        return 'haha 😊';
 
-    } catch (error) {
+        return "hmm okay 😊";
 
-        if (error?.name === 'AbortError') {
-            console.warn('Chat API timed out.');
-        } else {
-            console.warn('Chat API failed:', error);
-        }
 
-        return 'haha 😊';
+    } catch(e){
+
+        console.warn(
+            "API error:",
+            e
+        );
+
+        return (
+            Math.random() < 0.5
+                ? "sorry, one sec 😅"
+                : "wait haha, my connection is being weird"
+        );
 
     } finally {
-        clearTimeout(timeoutId);
+
+        clearTimeout(timeout);
+
     }
+
 }
 
 
-/* ---------------------------------------------------------
-   Ghost / end chat
---------------------------------------------------------- */
+/* =========================================================
+   TELEGRAM NOTIFICATION
+========================================================= */
 
-async function tG(userText) {
-
-    st = 'ghosting';
-    disableInput();
-
-    const r = Math.random();
+function notifyReturn(){
 
     try {
 
-        if (r < 0.5) {
+        if (
+            tg &&
+            tg.HapticFeedback
+        ){
 
-            const reply = await api(userText);
+            tg.HapticFeedback
+                .notificationOccurred(
+                    "success"
+                );
 
-            await wt(
-                800 + Math.random() * 1500
+        }
+
+    } catch(e){}
+
+
+    /*
+       Popup only when Telegram WebApp
+       is actually available.
+    */
+
+    try {
+
+        if (
+            tg &&
+            typeof tg.showPopup ===
+            "function"
+        ){
+
+            tg.showPopup({
+
+                title:"Chat resumed",
+
+                message:
+                    `${C.n} is back online.`,
+
+                buttons:[
+                    {
+                        type:"ok"
+                    }
+                ]
+
+            });
+
+        }
+
+    } catch(e){}
+
+}
+
+
+/* =========================================================
+   BOT MESSAGE PROCESSOR
+========================================================= */
+
+async function processQueue(){
+
+    if (queueRunning) {
+        return;
+    }
+
+
+    queueRunning = true;
+
+
+    while (
+        sendQueue.length &&
+        state === "active"
+    ){
+
+        const item =
+            sendQueue.shift();
+
+
+        /*
+           Different response delay
+           every time.
+        */
+
+        await wait(
+            randomDelay()
+        );
+
+
+        if (
+            state !== "active"
+        ) {
+            break;
+        }
+
+
+        showTyping();
+
+
+        const reply =
+            await askAI(
+                item.text
             );
 
-            sT();
 
-            await wt(tD(reply));
+        await wait(
+            typingDelay(reply)
+        );
 
-            hT();
 
-            ap(reply, 'r');
+        if (
+            state !== "active"
+        ){
 
-        } else {
+            hideTyping();
 
-            sT();
+            break;
 
-            await wt(
-                3500 + Math.random() * 3000
-            );
-
-            hT();
         }
 
-    } catch (e) {
 
-        hT();
+        hideTyping();
 
-    }
 
-    setS(pk(LS), false);
-
-    await wt(
-        4000 + Math.random() * 8000
-    );
-
-    if (st !== 'ghosting') {
-        return;
-    }
-
-    aS(
-        `⚠️ ${C.n} has ended the chat`,
-        true
-    );
-
-    st = 'ended';
-
-    sv();
-
-    if (dR()) {
-        sR(rD());
-    } else {
-        sN(
-            30000 +
-            Math.random() * 45000
+        addMessage(
+            reply,
+            "received"
         );
+
     }
+
+
+    queueRunning = false;
+
 }
 
 
-/* ---------------------------------------------------------
-   Return after ending
---------------------------------------------------------- */
+/* =========================================================
+   USER CAN ALWAYS SEND
+========================================================= */
 
-function sR(delay) {
+function send(){
 
-    setTimeout(async () => {
+    if (
+        state !== "active"
+    ){
 
-        if (st !== 'ended') {
-            return;
-        }
-
-        aS(
-            `✅ ${C.n} has joined the chat again`,
-            false
-        );
-
-        setS('Online', true);
-
-        const line = pk(CB);
-
-        sT();
-
-        await wt(tD(line));
-
-        hT();
-
-        ap(line, 'r');
-
-        st = 'active';
-
-        um += pG();
-
-        busy = false;
-
-        enableInput();
-
-        sv();
-
-        try {
-            tg?.HapticFeedback?.notificationOccurred('success');
-        } catch (_) {}
-
-    }, delay);
-}
-
-
-/* ---------------------------------------------------------
-   Permanently closed
---------------------------------------------------------- */
-
-function sN(delay) {
-
-    setTimeout(() => {
-
-        if (st !== 'ended') {
-            return;
-        }
-
-        setS('offline', false);
-
-        aS(
-            `❌ ${C.n} didn't come back online. Start a new chat 💫`,
-            true
-        );
-
-        st = 'closed';
-
-        disableInput();
-
-        sv();
-
-    }, delay);
-}
-
-
-/* ---------------------------------------------------------
-   Send message
---------------------------------------------------------- */
-
-async function send() {
-
-    if (busy) {
         return;
+
     }
 
-    if (st !== 'active') {
-        return;
-    }
 
-    const text = inp.value.trim();
+    const text =
+        inp.value.trim();
+
 
     if (!text) {
         return;
     }
 
-    busy = true;
-    us = true;
-
-    sb.disabled = true;
-
-    ap(text, 's');
-
-    inp.value = '';
-
-    um++;
 
     /*
-       User reached ghost threshold.
-       No normal AI response for this message.
+       User message appears immediately.
+       Input does NOT get disabled.
     */
-    if (um >= ga) {
 
-        await tG(text);
-
-        busy = false;
-
-        return;
-    }
+    addMessage(
+        text,
+        "sent"
+    );
 
 
-    try {
+    inp.value = "";
 
-        await wt(
-            800 + Math.random() * 2200
-        );
 
-        if (st !== 'active') {
-            return;
-        }
+    sendQueue.push({
 
-        sT();
+        text,
 
-        const reply = await api(text);
+        timestamp:
+            Date.now()
 
-        if (st !== 'active') {
-            hT();
-            return;
-        }
+    });
 
-        await wt(tD(reply));
 
-        hT();
+    processQueue();
 
-        ap(reply, 'r');
-
-        try {
-            tg?.HapticFeedback?.impactOccurred('light');
-        } catch (_) {}
-
-    } catch (e) {
-
-        hT();
-
-        if (st === 'active') {
-            ap('haha 😊', 'r');
-        }
-
-    } finally {
-
-        busy = false;
-
-        if (st === 'active') {
-            enableInput();
-        }
-    }
 }
 
 
-/* ---------------------------------------------------------
-   Restore previous chat
---------------------------------------------------------- */
+/* =========================================================
+   TEMPORARY AVAILABILITY
+========================================================= */
 
-(function restore() {
-
-    const old = ld();
+async function startTemporaryAway(){
 
     if (
-        old &&
-        Array.isArray(old.m) &&
-        old.m.length
-    ) {
+        state !== "active"
+    ){
 
-        h = old.m
-            .filter(Boolean)
-            .slice(-80);
+        return;
 
-        h.forEach(dom);
-
-        um = h.filter(
-            m => m && m.t === 's'
-        ).length;
-
-        /*
-           Restored states
-        */
-
-        if (old.s === 'ended') {
-
-            st = 'ended';
-
-            disableInput();
-
-            setS(
-                pk(LS),
-                false
-            );
-
-            if (dR()) {
-
-                sR(
-                    5000 +
-                    Math.random() * 10000
-                );
-
-            } else {
-
-                sN(
-                    15000 +
-                    Math.random() * 20000
-                );
-            }
-
-            return;
-        }
+    }
 
 
-        if (old.s === 'closed') {
-
-            st = 'closed';
-
-            disableInput();
-
-            setS(
-                'offline',
-                false
-            );
-
-            return;
-        }
+    state =
+        "away";
 
 
-        /*
-           Active chat restored.
-           us=true because we already have a conversation.
-        */
-
-        st = 'active';
-        us = true;
-
-        enableInput();
+    hideTyping();
 
 
-        /*
-           Optional small re-engagement message.
-        */
+    setStatus(
+        "away",
+        false
+    );
 
+
+    addSystem(
+        `${C.n} is away for a while`
+    );
+
+
+    /*
+       15 sec - 70 sec
+       random comeback.
+    */
+
+    const awayTime =
+        15000 +
+        Math.random() *
+        55000;
+
+
+    unavailableTimer =
         setTimeout(
             async () => {
 
                 if (
-                    !us ||
-                    um <= 0 ||
-                    st !== 'active' ||
-                    busy
-                ) {
+                    state !== "away"
+                ){
                     return;
                 }
 
-                const line = pk(RN);
 
-                if (!line) {
+                state =
+                    "active";
+
+
+                setStatus(
+                    "Online",
+                    true
+                );
+
+
+                addSystem(
+                    `✅ ${C.n} is back online`
+                );
+
+
+                notifyReturn();
+
+
+                await wait(
+                    1000 +
+                    Math.random() *
+                    2500
+                );
+
+
+                if (
+                    state !== "active"
+                ){
                     return;
                 }
 
-                sT();
 
-                await wt(tD(line));
+                const backReplies = [
 
-                if (st !== 'active') {
-                    hT();
-                    return;
-                }
+                    "hey, i'm back 😊",
 
-                hT();
+                    "sorry i was away for a bit",
 
-                ap(line, 'r');
+                    "back now haha, what were you saying?",
+
+                    "i'm here again 😄",
+
+                    "sorry, got busy for a while"
+
+                ];
+
+
+                showTyping();
+
+
+                await wait(
+                    typingDelay(
+                        "back"
+                    )
+                );
+
+
+                hideTyping();
+
+
+                addMessage(
+                    random(
+                        backReplies
+                    ),
+                    "received"
+                );
+
+
+                processQueue();
 
             },
-            2500 +
-            Math.random() * 2500
+
+            awayTime
         );
 
+}
+
+
+/* =========================================================
+   RANDOM TEMPORARY AWAY
+========================================================= */
+
+function scheduleAway(){
+
+    if (
+        state !== "active"
+    ){
         return;
     }
 
 
     /*
-       New chat:
-       send an automatic opening message after a delay.
+       Not too frequent.
+       Sometimes several minutes can pass.
     */
 
-    if (Math.random() < 0.85) {
+    const next =
+        45000 +
+        Math.random() *
+        180000;
+
+
+    setTimeout(
+        () => {
+
+            if (
+                state !== "active"
+            ){
+                return;
+            }
+
+
+            /*
+               18% chance
+            */
+
+            if (
+                Math.random() < 0.18
+            ){
+
+                startTemporaryAway();
+
+            }
+
+
+            scheduleAway();
+
+        },
+
+        next
+    );
+
+}
+
+
+/* =========================================================
+   NEW CHAT
+========================================================= */
+
+function newChat(){
+
+    try {
+
+        localStorage.removeItem(
+            CHAT_KEY
+        );
+
+    } catch(e){}
+
+
+    location.reload();
+
+}
+
+
+/* =========================================================
+   RESTORE
+========================================================= */
+
+(function restore(){
+
+    const old =
+        loadChat();
+
+
+    if (
+        old &&
+        Array.isArray(
+            old.messages
+        ) &&
+        old.messages.length
+    ){
+
+        messageHistory =
+            old.messages
+                .slice(-100);
+
+
+        /*
+           clear automatically generated
+           profile card only remains at top.
+        */
+
+        messageHistory.forEach(
+            renderMessage
+        );
+
+
+        if (
+            old.state === "away"
+        ){
+
+            state =
+                "active";
+
+            setStatus(
+                "Online",
+                true
+            );
+
+        }
+        else if (
+            old.state === "closed"
+        ){
+
+            state =
+                "closed";
+
+            setStatus(
+                "offline",
+                false
+            );
+
+        }
+
+
+        scheduleAway();
+
+        return;
+
+    }
+
+
+    /*
+       First message
+    */
+
+    if (
+        Math.random() < 0.82
+    ){
 
         setTimeout(
             async () => {
 
                 if (
-                    us ||
-                    st !== 'active' ||
-                    h.length > 0
-                ) {
+                    state !== "active" ||
+                    messageHistory.length
+                ){
+
                     return;
+
                 }
 
-                us = true;
 
-                const firstMessage = pk([
+                const first = random([
+
                     "heyy 👋",
+
                     "hii 😊",
-                    "hey! finally someone matched me 😄",
-                    "hellooo, how are you?"
+
+                    "hey, how are you?",
+
+                    "helloo, what's up?",
+
+                    "hii, nice to meet you"
+
                 ]);
 
-                sT();
 
-                await wt(tD(firstMessage));
+                showTyping();
 
-                if (st !== 'active') {
-                    hT();
-                    return;
-                }
 
-                hT();
+                await wait(
+                    typingDelay(first)
+                );
 
-                ap(firstMessage, 'r');
+
+                hideTyping();
+
+
+                addMessage(
+                    first,
+                    "received"
+                );
 
             },
-            2500 +
-            Math.random() * 5500
+
+            2200 +
+            Math.random() * 5000
         );
+
     }
+
+
+    scheduleAway();
 
 })();
 
 
-/* ---------------------------------------------------------
-   Events
---------------------------------------------------------- */
+/* =========================================================
+   EVENTS
+========================================================= */
 
-/*
-   Only ONE click event is used.
-   Previous code had click + touchend which could result in
-   duplicate calls on some mobile browsers.
-*/
-
-inp.addEventListener('keydown', (event) => {
-
-    if (event.key === 'Enter') {
-
-        event.preventDefault();
-
-        if (!busy) {
-            send();
-        }
-    }
-});
+sb.addEventListener(
+    "click",
+    send
+);
 
 
-sb.addEventListener('click', () => {
-    send();
-});
-
-
-/*
-   New-chat button is created dynamically,
-   therefore event delegation is used.
-*/
-
-mc.addEventListener('click', (event) => {
-
-    const target = event.target;
-
-    if (
-        target &&
-        target.classList &&
-        target.classList.contains('ncb')
-    ) {
-        nC();
-    }
-});
-
-
-/*
-   Don't aggressively open keyboard in Telegram mobile.
-   Focus only on normal desktop-ish environments.
-*/
-
-setTimeout(() => {
-
-    try {
+inp.addEventListener(
+    "keydown",
+    event => {
 
         if (
-            !inp.disabled &&
-            !('ontouchstart' in window)
-        ) {
-            inp.focus();
+            event.key === "Enter"
+        ){
+
+            event.preventDefault();
+
+            send();
+
         }
 
-    } catch (_) {}
+    }
+);
 
-}, 500);
+
+/* =========================================================
+   NEW CHAT BUTTON
+========================================================= */
+
+mc.addEventListener(
+    "click",
+    event => {
+
+        const target =
+            event.target;
+
+
+        if (
+            target &&
+            target.classList &&
+            target.classList.contains(
+                "ncb"
+            )
+        ){
+
+            newChat();
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   PAGE VISIBILITY
+========================================================= */
+
+document.addEventListener(
+    "visibilitychange",
+    () => {
+
+        /*
+           Nothing is blocked when user
+           switches apps or tabs.
+        */
+
+        if (
+            document.visibilityState ===
+            "visible"
+        ){
+
+            if (
+                state === "active"
+            ){
+
+                setStatus(
+                    "Online",
+                    true
+                );
+
+            }
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   INITIAL FOCUS
+========================================================= */
+
+setTimeout(
+    () => {
+
+        try {
+
+            if (
+                !("ontouchstart" in window) &&
+                !inp.disabled
+            ){
+
+                inp.focus();
+
+            }
+
+        } catch(e){}
+
+    },
+
+    500
+);
 
 </script>
 
@@ -1712,13 +2208,23 @@ setTimeout(() => {
 """
 
 
+# =========================================================
+# SERVER
+# =========================================================
+
 if __name__ == "__main__":
+
     import uvicorn
 
-    port = int(os.environ.get("PORT", "8000"))
+    port = int(
+        os.environ.get(
+            "PORT",
+            "8000"
+        )
+    )
 
     uvicorn.run(
         app,
         host="0.0.0.0",
-        port=port,
+        port=port
     )
